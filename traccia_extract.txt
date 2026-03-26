@@ -1,0 +1,98 @@
+Tracce progetto di gruppo
+Fondamenti di Robotica
+Docenti: Loredana Zollo
+Clemente Lauretti
+Tutor: Rita Molle
+email: l.zollo@unicampus.it
+c.lauretti@unicampus.it
+rita.molle@unicampus.it
+CAMPUS BIO-MEDICO UNIVERSITY OF ROME
+Via Álvaro del Portillo, 21 - 00128 Rome - Italy
+www.unicampus.it
+Overview del progetto di gruppo
+Obiettivo: Sviluppare un framework di simulazione che
+consenta al robot TIAGo di eseguire attività di pick and
+place, sfruttando algoritmi avanzati basati sull'intelligenza
+artificiale per la modellazione, la pianificazione del
+movimento, il controllo e la percezione del robot
+Tools & conoscenze richieste: ROS 2, simulatori Rviz e
+Gazebo, basi di robotica, intelligenza artificiale e ArUco
+marker
+Sfide principali:
+Task 1: Modellazione di robot in Gazebo
+Localizzazione di oggetti
+Modalità di verifica
+Trasformazioni tra frame
+• Consegna dei pkg creati
+Task 2: Pianificazione del movimento
+• Presentazione di un report a fine corso e domande
+Inversione cinematica
+individuali
+Controllo del movimento
+CCAAMMPPUUSS BBIIOO--MMEEDDIICCOO UUNNIIVVEERRSSIITTYY OOFF RROOMMEE
+wwwwww..uunniiccaammppuuss..iitt
+Task 1
+Obiettivi specifici:
+Programmare il robot TIAGo per i) eseguire una scansione dell'ambiente muovendo
+gradualmente la testa del robot, ii) rilevare i marker ArUco tramite la camera RGB-D e iii)
+trasformare le coordinate dei marker dal sistema di riferimento della camera al sistema di
+riferimento della base del robot.
+Step da seguire:
+• Avviare la simulazione del robot in Gazebo
+• Movimentare la testa del TIAGo al fine di scansionare l’ambiente
+• Rilevare la presenza di ArUco marker nella scena
+• Stimare la posa dei marker rispetto alla terna camera
+• Stimare la posa della camera rispetto alla terna base del robot
+• Effettuare una trasformazione di coordinate per esprimere la posa dei marker in terna base
+• Stampare la posa dei marker rispetto alla base del robot
+• Visualizzare su Rviz e su gazebo la terna dei marker
+Strumenti e librerie da utilizzare:
+• Nodi, Topics, Services, Actions, Launch files, TF2ROS, OpenCV
+CCAAMMPPUUSS BBIIOO--MMEEDDIICCOO UUNNIIVVEERRSSIITTYY OOFF RROOMMEE
+wwwwww..uunniiccaammppuuss..iitt
+Suggerimenti utili per Task 1
+1. Avviare la simulazione del robot in ambiente Gazebo
+• Seguire le indicazioni fornite alla fine della presentazione per l’installazione dei pkg del Tiago e la
+configurazione dell’ambiente
+• Eseguire il commando: ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True ()
+2. Movimentare la testa del TIAGo al fine di scansionare l’ambiente
+• Action su cui pubblicare: /head_controller/follow_joint_trajectory
+• Tipo messaggio: FollowJointTrajectory
+• 2 giunti: head_1_joint (destra/sinistra) e head_2_joint (su/giù)
+3. Stimare la posa degli ArUco presenti nella scena
+• Leggere dal topic /head_front_camera/rgb/image_raw (tipo messaggio Image) le immagini visualizzate dal
+robot
+• Sottoscrivere ai parametri della camera /head_front_camera/rgb/camera_info (tipo messaggio CameraInfo)
+• Pubblicare la posa e l’ID dell’ArUco marker (cv2.aruco.DICT_6x6_250, marker_size = 0.06)
+4. Effettuare una trasformazione di coordinate per esprimere la posa dei marker in terna base
+• Trasformare la posa dal frame ‘head_front_camera_color_optical_frame’ a ‘base_footprint’ utilizzando tf
+• Pubblicare su uno o più topic la posa degli ArUco rilevati
+CCAAMMPPUUSS BBIIOO--MMEEDDIICCOO UUNNIIVVEERRSSIITTYY OOFF RROOMMEE
+wwwwww..uunniiccaammppuuss..iitt
+Guida alla configurazione dell’ambiente
+Sostituire il file launch
+Aprire la cartella: ~/tiago_public_ws/src/tiago_simulation/tiago_gazebo/launch
+Sostituire il file tiago_gazebo.launch.py con il file launch (stesso nome) dell’elearning
+Modifiche → sostituzione del world per inserire “pick_place_close_demo”
+→ aggiunta dei comandi per aprire rviz
+Scaricare i modelli
+Aprire la cartella: ~/tiago_public_ws/src/pal_gazebo_worlds/models
+Scaricare i modelli della cartella Model dell’elearning e sostituirli nella cartella models del ws
+Modifiche → creazione ArUco Marker sul tavolo
+→ creazione oggetti (pringles e Coca Cola) con ArUco Marker attaccati
+CCAAMMPPUUSS BBIIOO--MMEEDDIICCOO UUNNIIVVEERRSSIITTYY OOFF RROOMMEE
+wwwwww..uunniiccaammppuuss..iitt
+Guida alla configurazione dell’ambiente
+Scaricare il mondo
+Aprire la cartella: ~/tiago_public_ws/src/pal_gazebo_worlds/world
+Scaricare il mondo della cartella world dell’elearning e sostituirlo nella cartella world del ws
+Modifiche → creazione ambiente per pick and place → tavolo con sopra ArUco e oggetti
+con ArUco
+Build dell’ambiente
+colcon build --packages-select pal_gazebo_worlds tiago_simulation
+Source del workspace
+source ~/tiago_public_ws/install/setup.bash
+Simulazione → TIAGo nell’ambiente per pick and place:
+ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
+CCAAMMPPUUSS BBIIOO--MMEEDDIICCOO UUNNIIVVEERRSSIITTYY OOFF RROOMMEE
+wwwwww..uunniiccaammppuuss..iitt

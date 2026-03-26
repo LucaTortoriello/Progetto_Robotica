@@ -8,7 +8,7 @@ from geometry_msgs.msg import PoseStamped
 
 import cv2 #OpenCV per ArUco
 import numpy as np 
-from cv_bridge import CvBridge #per convertire ROS Image in OpenCV Image
+from cv_bridge import CvBridge #per convertire ROS Image in OpenCV Image (comunicazione tra ROS e OpenCV)
 
 import tf2_ros #solo per trasformazioni
 from scipy.spatial.transform import Rotation as R #solo per rotazioni (evitiamo di fare tutto a mano)
@@ -53,6 +53,7 @@ class ArucoDetector(Node):
 
         # TF
         self.tf_buffer = tf2_ros.Buffer() #buffer per memorizzare le trasformazioni, permette di fare lookup delle trasformazioni tra frame
+        #memorizzazione istante per istante informazione catena cinematica del robot
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self) #listener per ascoltare le trasformazioni, si collega al buffer e al nodo, permette di aggiornare il buffer con le trasformazioni che arrivano
 
         self.base_frame = 'base_footprint' #frame di riferimento per la posa in terna base, è il frame del robot, in cui vogliamo esprimere la posa del marker
@@ -100,6 +101,7 @@ class ArucoDetector(Node):
 
         cv2.aruco.drawDetectedMarkers(frame, corners, ids)
         cv2.aruco.drawAxis(frame, self.camera_matrix, self.dist_coeffs, rvec, tvec, 0.03)
+        #rvec descrive la rotazione
 
         # ==========================
         # CREATE PUBLISHER DINAMICI
@@ -123,6 +125,7 @@ class ArucoDetector(Node):
 
         pose_cam.pose.position.x = float(tvec[0][0][0])
         # Estrai coordinate Y e Z del marker dalla camera (tvec è array 1x1x3)
+        # Descrive traslazione lungo asse x y e z
         pose_cam.pose.position.y = float(tvec[0][0][1])
         pose_cam.pose.position.z = float(tvec[0][0][2])
 
@@ -150,23 +153,30 @@ class ArucoDetector(Node):
             Time(),
             timeout=Duration(seconds=0.2)
         ):
-
+# Prende trasformazione con tf buffer mediante lookup trasform, dal frame sorgente (camera frame) al frame base (base footprint)
             # Recupera la trasformazione da camera a base
             transform = self.tf_buffer.lookup_transform(
                 self.base_frame,
                 self.camera_frame,
                 Time()
-            )
-
+            ) 
             # Estrai la posizione del marker nel frame della camera
+            # Trasformiamo in numpy array per semplicita'
             pos_cam = np.array([tvec[0][0][0], tvec[0][0][1], tvec[0][0][2]])
 
             # Recupera la rotazione della trasformazione camera->base
-            q = transform.transform.rotation
-            r = R.from_quat([q.x, q.y, q.z, q.w])
+            #Riusciamo a ricostruire la catena
+            q = transform.transform.rotation #accesso al quaternione
+            # Rotazione (r) a partire dal quaternione. Prendiamo gli elementi
+            r = R.from_quat([q.x, q.y, q.z, q.w]) # Ricaviamo matrice di rotazione dalla camera alla base 
 
             # Trasforma la posizione dal frame camera al frame base
             pos_base = r.as_matrix() @ pos_cam
+            # Rispetto alla base cerchiamo la posizione. Per avere la posizione in terna base,
+            #consideriamo la matrice di rotazione tra camera e base (r) e la moltiplichiamo per la posizione del marker 
+            #rispetto alla camera (pos_cam).
+
+            #Prendiamo traslazione OO' per ricostruire matrice di trasformazione omogenea A1^0
             pos_base += np.array([
                 transform.transform.translation.x,
                 transform.transform.translation.y,
@@ -174,25 +184,36 @@ class ArucoDetector(Node):
             ])
 
             # Trasforma la rotazione del marker dal frame camera al frame base
+            # Rotazione del marker in terna camera
             r_marker = R.from_rotvec(rvec[0][0])
+            # Rotazione in terna base del marker, considerando la rotazione tra camera e base (r) e la rotazione 
+            # del marker in terna camera (r_marker)
             r_base = r * r_marker
+            # Il quaternione in terna base del marker è dato dalla rotazione tra camera e base (r) 
+            # moltiplicata per la rotazione del marker in terna camera (r_marker).
             quat_base = r_base.as_quat()
 
-            # Crea e popola il messaggio di pose nel frame base
+            # Posebase è messaggio di tipo PoseStamped che contiene la posa 
+            # del marker rispetto al frame base, con posizione e orientazione
+            # Nell'header ha id
             pose_base = PoseStamped()
             pose_base.header.stamp = msg.header.stamp
             pose_base.header.frame_id = self.base_frame
 
+
+            #Posizione
             pose_base.pose.position.x = float(pos_base[0])
             pose_base.pose.position.y = float(pos_base[1])
             pose_base.pose.position.z = float(pos_base[2])
 
+            #Orientazione
             pose_base.pose.orientation.x = float(quat_base[0])
             pose_base.pose.orientation.y = float(quat_base[1])
             pose_base.pose.orientation.z = float(quat_base[2])
             pose_base.pose.orientation.w = float(quat_base[3])
 
-            # Salva e pubblica la pose del marker nel frame base
+            # Mantiene le informazioni sulle posizioni per fare pick and place, se voglio fare pick and place devo sapere
+            # dove si trova il marker rispetto alla base, non alla camera
             self.last_pose_base = pose_base
             self.base_publishers[marker_id].publish(pose_base)
 
@@ -200,8 +221,10 @@ class ArucoDetector(Node):
         cv2.imshow("Aruco", frame)
         cv2.waitKey(1)
 
+        #Mostra ARUCO marker nell'ambiente 
+
     # ==========================
-    # REPUBLISH ULTIMO MARKER
+    # REPUBLISH
     # ==========================
     def republish(self):
         """Ripubblica la pose dell'ultimo marker rilevato"""
@@ -211,7 +234,9 @@ class ArucoDetector(Node):
 
         # Ripubblica la pose nel frame della camera
         if self.last_pose_camera is not None:
-            self.camera_publishers[self.last_id].publish(self.last_pose_camera)
+            self.camera_publishers[self.last_id].publish(self.last_pose_camera) #publisher dinamico. Se vedo prima aruco marker 4, creo publisher 
+            #aruco_camera_4 e aruco_base_4. Se poi vedo aruco marker 2, creo publisher aruco_camera_2 e aruco_base_2. 
+            #Se poi non vedo più marker, ripubblico ultima informazione che ho di marker 4 e marker 2
 
         # Ripubblica la pose nel frame base se disponibile
         if self.last_pose_base is not None:

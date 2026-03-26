@@ -12,12 +12,13 @@ from rclpy.node import Node
 # Lo usiamo solo come "trigger"
 # Terminale equivalente:
 # ros2 service call /play_motion_service example_interfaces/srv/SetBool "{data: true}"
-from example_interfaces.srv import SetBool
+#se gli arriva un booleano decide di fare o meno un'azione
+from example_interfaces.srv import SetBool #intefaccia tipica di ubuntu
 
 # ==========================================================
 # IMPORT PER ESEGUIRE COMANDI ROS2
 # ==========================================================
-import subprocess
+import subprocess #si appoggia ad un'action
 
 
 # ==========================================================
@@ -34,14 +35,16 @@ class PlayMotionServiceServer(Node):
         self.service = self.create_service(
             SetBool,
             '/play_motion_service',
-            self.callback
+            self.callback #definita sotto
         )
-
+#Avviato il comando sul terminale stampa pronto
         self.get_logger().info("Service server pronto.")
 
     # ==========================================================
     # CALLBACK SERVICE
     # ==========================================================
+
+    #Serve per costruire messaggio
     def callback(self, request, response):
         """
         request.data = True/False
@@ -53,9 +56,9 @@ class PlayMotionServiceServer(Node):
         # ------------------------------------------------------
         # CASO TRUE → esegui motion
         # ------------------------------------------------------
-        if request.data:
+        if request.data: #è pari ad 1 quindi è vero
 
-            motion_name = "head_tour"
+            motion_name = "head_tour" #esegue motion name
 
             self.get_logger().info(f"Eseguo motion: {motion_name}")
 
@@ -68,8 +71,10 @@ class PlayMotionServiceServer(Node):
                 capture_output=True,
                 text=True
             )
+            #Evitiamo terminale 
 
             # Controllo risultato
+            # Se non ci sono errori, la risposta ha due campi. Booleano+Messaggio di Motion Head Tour 
             if result.returncode == 0:
                 response.success = True
                 response.message = f"Motion {motion_name} eseguita!"

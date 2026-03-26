@@ -1,0 +1,143 @@
+COMANDI UTILI - ROS 2
+Estratti da: Fondamenti di Robotica - Luca Tortoriello
+================================================================================
+
+INDICE
+------
+1. ROS 2 CLI - Nodi
+2. ROS 2 CLI - Topics  
+3. ROS 2 CLI - Services
+4. ROS 2 CLI - Actions
+5. ROS 2 - Creazione Pacchetti
+6. Colcon Build
+7. Setup e Source
+8. Directory e File
+9. Python - Install
+
+================================================================================
+
+1. ROS 2 CLI - NODI (Terminale ROS 2)
+--------------------------------------
+Ambiente: Terminale bash/zsh (dopo aver fatto 'source')
+Descrizione: Esegui nodi ROS 2 e visualizza informazioni su di essi
+
+  ros2 run turtlesim turtlesim_node
+  ros2 run turtlesim turtle_teleop_key
+  ros2 node list
+  ros2 node info /turtlesim
+  ros2 run my_py_pkg test_node
+
+
+2. ROS 2 CLI - TOPICS (Terminale ROS 2)
+---------------------------------------
+Ambiente: Terminale bash/zsh (dopo aver fatto 'source')
+Descrizione: Gestisci e monitora i topic (canali di comunicazione) in ROS 2
+
+  ros2 topic list
+  ros2 topic list -t
+  ros2 topic echo /turtle1/cmd_vel
+  ros2 topic info /turtle1/cmd_vel
+  ros2 interface show geometry_msgs/msg/Twist
+  ros2 topic pub /turtle1/cmd_vel geometry_msgs/msg/Twist
+
+
+3. ROS 2 CLI - SERVICES (Terminale ROS 2)
+------------------------------------------
+Ambiente: Terminale bash/zsh (dopo aver fatto 'source')
+Descrizione: Chiama servizi e visualizza informazioni su di essi
+
+  ros2 service list
+  ros2 service type /clear
+  ros2 interface show turtlesim/srv/Spawn
+  ros2 interface show std_srvs/srv/Empty
+  ros2 service call /clear std_srvs/srv/Empty
+
+
+4. ROS 2 CLI - ACTIONS (Terminale ROS 2)
+----------------------------------------
+Ambiente: Terminale bash/zsh (dopo aver fatto 'source')
+Descrizione: Invia goal e visualizza informazioni sulle azioni
+
+  ros2 action list
+  ros2 action info /turtle1/rotate_absolute -t
+  ros2 interface show turtlesim/action/RotateAbsolute
+  ros2 action send_goal /turtle1/rotate_absolute \
+
+
+5. ROS 2 - CREAZIONE PACCHETTI (Terminale ROS 2)
+------------------------------------------------
+Ambiente: Terminale bash/zsh (dopo aver fatto 'source')
+Descrizione: Crea nuovi pacchetti ROS 2
+
+  ros2 pkg create my_py_pkg --build-type ament_python --dependencies rclpy
+  ros2 pkg create my_bringup --build-type ament_cmake
+  ros2 launch my_bringup action_app.launch.py
+
+
+6. COLCON BUILD (Terminale - nella root del workspace)
+------------------------------------------------------
+Ambiente: Terminale bash/zsh (root della cartella ros2_ws)
+Descrizione: Compila e costruisce i pacchetti ROS 2
+
+  colcon build
+  colcon build --packages-select my_py_pkg
+  colcon build --packages-select my_bringup
+
+
+7. SETUP E SOURCE (Terminale)
+-----------------------------
+Ambiente: Terminale bash/zsh
+Descrizione: Configurare l'ambiente ROS 2 per il workspace
+
+  source ~/ros2_ws/install/setup.bash
+  source /opt/ros/humble/setup.bash
+  source ~/.bashrc
+
+
+8. DIRECTORY E FILE (Terminale)
+-------------------------------
+Ambiente: Terminale bash/zsh
+Descrizione: Navigare e creare strutture di cartelle
+
+  mkdir -p ~/ros2_ws/src
+  cd ~/ros2_ws
+  cd ~/ros2_ws/src
+  cd ~/ros2_ws/src/my_py_pkg/my_py_pkg/
+  cd my_bringup
+  mkdir launch
+
+
+9. PYTHON - INSTALL (Terminale bash/zsh)
+---------------------------------------
+Ambiente: Terminale bash/zsh
+Descrizione: Installa pacchetti Python necessari
+
+  pip3 install opencv-contrib-python==4.5.4.60 transforms3d==0.4.2
+
+
+================================================================================
+NOTE IMPORTANTI:
+================================================================================
+
+- Terminale ROS 2: Usa DOPO aver fatto 'source' del setup.bash
+- Prima di eseguire qualsiasi comando ROS 2, assicurati di fare:
+  $ source ~/ros2_ws/install/setup.bash
+  
+- Terminale bash/zsh: Qualsiasi terminale Linux/Mac standard
+
+- Assicurati di avere colcon e ROS 2 installati prima di usare i comandi
+
+- Tutti i comandi di directory (cd, mkdir) devono essere eseguiti nel terminale
+
+================================================================================
+RIFERIMENTI UTILI:
+================================================================================
+
+Documentazione ufficiale ROS 2:
+https://docs.ros.org/en/humble/
+
+Setup iniziale workspace:
+$ mkdir -p ~/ros2_ws/src
+$ cd ~/ros2_ws
+$ colcon build
+$ source install/setup.bash

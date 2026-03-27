@@ -59,12 +59,6 @@ geometry_msgs/Pose pose
 string marker_id
 ---
 
-TIPI SUPPORTATI:
-- Primitivi: bool, int8/16/32/64, uint8/16/32/64, float32/64, string
-- Array: int32[], float32[], string[]
-- Nested: altri message type come std_msgs/Header, geometry_msgs/Pose
-
-
 4. COMANDI ROS 2 PER TOPIC
 ================================================================================
 
@@ -92,7 +86,7 @@ ros2 topic hz /head_front_camera/rgb/image_raw
 ros2 interface show geometry_msgs/msg/PoseStamped
 
 
-4.2 Echoing (Leggi dati in tempo reale):
+4.2 Echoing (Legge dati in tempo reale):
 
 # Leggi i messaggi pubblicati su un topic
 ros2 topic echo <nome_topic>
@@ -126,7 +120,7 @@ ros2 topic pub --once /cmd geometry_msgs/msg/Twist '{linear: {x: 1.0}}'
 ros2 topic pub --rate 2 /cmd geometry_msgs/msg/Twist '{angular: {z: 0.5}}'
 
 
-5. ESERCITAZIONE PRATICA - ARUCO DETECTION
+5. ESERCITAZIONE - ARUCO DETECTION
 ================================================================================
 
 L'esercitazione Esercitazione2-Topic usa ArUco marker detection e pubblica
@@ -211,7 +205,6 @@ ros2 run <package> <node> --ros-args --remap <old_name>:=<new_name>
 ESEMPIO:
 ros2 run my_pkg my_node --ros-args --remap /aruco_camera_0:=/marker_0
 
-
 6.2 Recording e playback:
 
 # Registra tutti i topic in un bag file
@@ -260,22 +253,7 @@ ros2 bag record /aruco_camera_0 /aruco_base_0
 # Usa RViz per visualizzare
 rviz2
 
-
-8. DIFFERENZE: TOPIC vs SERVICE
-================================================================================
-
-CARATTERISTICA         TOPIC                SERVICE
-Comunicazione          Asincrono            Sincrono
-Modello                Pub/Sub              Request/Response
-Connessione            Many-to-Many         One-to-One
-Attesa Risposta        NO                   SI (blocca)
-Uso Ideale             Stream dati          Azioni discrete
-Throughput             Alto                 Basso-Medio
-Frequenza              Continua             On-demand
-Uso Tipico             Sensori, pose        Comandi
-
-
-9. BEST PRACTICES
+8. BEST PRACTICES
 ================================================================================
 
 - Usa topic per dati CONTINUI (camera, sensori, pose)
@@ -284,7 +262,6 @@ Uso Tipico             Sensori, pose        Comandi
 - Usa Echo per debuggare: ros2 topic echo
 - Visualizza con RViz o rqt_image_view
 - Nomina i topic in modo descrittivo (/aruco_camera_0, non /topic1)
-
 
 10. COMANDI ESSENZIALI RIASSUNTO
 ================================================================================

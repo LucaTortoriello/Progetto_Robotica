@@ -1,0 +1,304 @@
+================================================================================
+           GUIDA: ROS 2 TOPICS
+================================================================================
+
+1. INTRO
+================================================================================
+
+I Topic sono meccanismi di comunicazione ASINCRONO Publish/Subscribe in ROS 2.
+Un nodo publisher invia dati su un topic, e chiunque sia interessato (subscriber)
+può ricevere quei dati. Il publisher non aspetta risposte.
+
+Differenza dai Service:
+- Service: sincrono, request/response, aspetti la risposta
+- Topic: asincrono, publish/subscribe, flusso continuo di dati
+
+Caratteristiche:
+- Comunicazione asincrona (il publisher non aspetta)
+- Modello Publish/Subscribe
+- Many-to-Many: più publisher e subscriber sullo stesso topic
+- Ideale per stream di dati continui (sensori, immagini, pose)
+
+
+2. ARCHITETTURA PUBLISHER-SUBSCRIBER
+================================================================================
+
+Publisher:
+- Pubblica dati su un topic periodicamente
+- Non conosce chi riceve i dati
+- Continua subito dopo la pubblicazione
+
+Subscriber:
+- Si sottoscrive a un topic
+- Riceve dati quando disponibili
+- Esegue una callback quando arrivano nuovi dati
+
+Message Type:
+- Definisce la struttura dei dati pubblicati
+- Definita in file .msg
+- Esempi: sensor_msgs/Image, geometry_msgs/Pose, std_msgs/String
+
+
+3. CREAZIONE DI UN MESSAGE (.msg)
+================================================================================
+
+File: <package>/msg/<Nome>.msg
+
+ESEMPIO 1 - Messaggio semplice:
+---
+int32 id
+float32 x
+float32 y
+float32 z
+---
+
+ESEMPIO 2 - Messaggio con header (timestamp + frame):
+---
+std_msgs/Header header
+geometry_msgs/Pose pose
+string marker_id
+---
+
+TIPI SUPPORTATI:
+- Primitivi: bool, int8/16/32/64, uint8/16/32/64, float32/64, string
+- Array: int32[], float32[], string[]
+- Nested: altri message type come std_msgs/Header, geometry_msgs/Pose
+
+
+4. COMANDI ROS 2 PER TOPIC
+================================================================================
+
+4.1 Listing e Monitoring:
+
+# Lista tutti i topic disponibili
+ros2 topic list
+
+# Mostra tipo di messaggio di un topic
+ros2 topic info <nome_topic>
+
+# Mostra frequenza di pubblicazione (Hz)
+ros2 topic hz <nome_topic>
+
+# Mostra statistiche su un topic
+ros2 topic bw <nome_topic>
+
+# Visualizza la struttura di un messaggio
+ros2 interface show <msg_type>
+
+ESEMPI:
+ros2 topic list
+ros2 topic info /head_front_camera/rgb/image_raw
+ros2 topic hz /head_front_camera/rgb/image_raw
+ros2 interface show geometry_msgs/msg/PoseStamped
+
+
+4.2 Echoing (Leggi dati in tempo reale):
+
+# Leggi i messaggi pubblicati su un topic
+ros2 topic echo <nome_topic>
+
+# Con numero massimo di messaggi
+ros2 topic echo <nome_topic> --count 10
+
+# Formato compatto
+ros2 topic echo <nome_topic> --compact
+
+ESEMPI:
+ros2 topic echo /head_front_camera/rgb/image_raw
+ros2 topic echo /aruco_base_1 --count 5
+ros2 topic echo /head_front_camera/rgb/camera_info --compact
+
+
+4.3 Publishing (Pubblicare dati da terminale):
+
+# Sintassi generale
+ros2 topic pub <nome_topic> <msg_type> '{campi}'
+
+# Usa --once per una sola pubblicazione
+ros2 topic pub --once <nome_topic> <msg_type> '{campi}'
+
+# Pubblica periodicamente (default 10 Hz)
+ros2 topic pub --rate 5 <nome_topic> <msg_type> '{campi}'
+
+ESEMPI:
+ros2 topic pub /test std_msgs/msg/String '{data: "hello"}'
+ros2 topic pub --once /cmd geometry_msgs/msg/Twist '{linear: {x: 1.0}}'
+ros2 topic pub --rate 2 /cmd geometry_msgs/msg/Twist '{angular: {z: 0.5}}'
+
+
+5. ESERCITAZIONE PRATICA - ARUCO DETECTION
+================================================================================
+
+L'esercitazione Esercitazione2-Topic usa ArUco marker detection e pubblica
+su topic dinamici le pose dei marker.
+
+5.1 Comandi per lanciare l'esercitazione:
+
+# Terminale 1: Lanciare TIAGO in Gazebo
+ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
+
+# Terminale 2: Lanciare il nodo ArUco detector
+ros2 run aruco_ros aruco_detector_node
+
+Oppure lanciare il nodo dall'esercitazione:
+cd Esercitazioni/Esercitazione2-Topic
+ros2 run <package_name> single_aruco
+
+
+5.2 Topic pubblicati dall'ArUco detector:
+
+Il nodo ArUco pubblica su più topic:
+
+# Posizione del marker rispetto alla camera
+/aruco_camera_<ID>      (geometry_msgs/PoseStamped)
+
+# Posizione del marker rispetto alla base del robot
+/aruco_base_<ID>        (geometry_msgs/PoseStamped)
+
+# Immagine della camera con marker rilevati
+/head_front_camera/rgb/image_raw   (sensor_msgs/Image)
+
+ESEMPI DI TOPIC:
+/aruco_camera_0         <- Marker 0 visto dalla camera
+/aruco_base_0           <- Marker 0 in coordinate base_footprint
+/aruco_camera_1         <- Marker 1 visto dalla camera
+/aruco_base_1           <- Marker 1 in coordinate base_footprint
+
+
+5.3 Monitora i topic ArUco:
+
+# Leggi le pose del marker 0 rispetto alla camera
+ros2 topic echo /aruco_camera_0
+
+# Leggi le pose del marker 0 rispetto alla base del robot
+ros2 topic echo /aruco_base_0
+
+# Frequenza di pubblicazione
+ros2 topic hz /aruco_camera_0
+
+# Info sui topic
+ros2 topic info /aruco_camera_0
+
+# Vedi la struttura dei dati pubblicati
+ros2 interface show geometry_msgs/msg/PoseStamped
+
+
+5.4 Visualizzazione dati ArUco:
+
+# Visualizza tutti i topic in RViz
+rviz2
+
+# Dentro RViz:
+- Add display
+- Marker -> Subscribe a /aruco_camera_0 o /aruco_base_0
+- Vedi la posizione del marker in 3D
+
+# Guarda l'immagine dalla camera
+rqt_image_view /head_front_camera/rgb/image_raw
+
+
+6. COMANDI AVANZATI
+================================================================================
+
+6.1 Filtrare e redirectare topic:
+
+# Relay: copia un topic a un altro nome
+ros2_relay <topic_src> <topic_dst>
+
+# Remapping locale: cambia nome a un topic per un nodo specifico
+ros2 run <package> <node> --ros-args --remap <old_name>:=<new_name>
+
+ESEMPIO:
+ros2 run my_pkg my_node --ros-args --remap /aruco_camera_0:=/marker_0
+
+
+6.2 Recording e playback:
+
+# Registra tutti i topic in un bag file
+ros2 bag record -a
+
+# Registra topic specifici
+ros2 bag record /aruco_camera_0 /aruco_base_0
+
+# Riproduci i dati registrati
+ros2 bag play rosbag2_YYYY-MM-DD_HH-MM-SS
+
+
+6.3 Debugging topic:
+
+# Lista i nodi subscriber/publisher di un topic
+ros2 topic info <nome_topic>
+
+# Visualizza la latenza di pubblicazione
+ros2 topic hz <nome_topic>
+
+# Monitor in tempo reale con rqt
+rqt_topic_monitor
+
+
+7. COMANDI FREQUENTI
+================================================================================
+
+# Vedi tutti topic disponibili
+ros2 topic list
+
+# Frequenza pubblicazione ArUco
+ros2 topic hz /aruco_camera_0
+
+# Leggi pose ArUco
+ros2 topic echo /aruco_base_0 --count 1
+
+# Info completa su un topic
+ros2 topic info /aruco_camera_0
+
+# Visualizza struttura dati
+ros2 interface show geometry_msgs/msg/PoseStamped
+
+# Registra dati
+ros2 bag record /aruco_camera_0 /aruco_base_0
+
+# Usa RViz per visualizzare
+rviz2
+
+
+8. DIFFERENZE: TOPIC vs SERVICE
+================================================================================
+
+CARATTERISTICA         TOPIC                SERVICE
+Comunicazione          Asincrono            Sincrono
+Modello                Pub/Sub              Request/Response
+Connessione            Many-to-Many         One-to-One
+Attesa Risposta        NO                   SI (blocca)
+Uso Ideale             Stream dati          Azioni discrete
+Throughput             Alto                 Basso-Medio
+Frequenza              Continua             On-demand
+Uso Tipico             Sensori, pose        Comandi
+
+
+9. BEST PRACTICES
+================================================================================
+
+- Usa topic per dati CONTINUI (camera, sensori, pose)
+- Usa service per operazioni DISCRETE (accendi/spegni, calcoli)
+- Monitora frequenza topic con: ros2 topic hz
+- Usa Echo per debuggare: ros2 topic echo
+- Visualizza con RViz o rqt_image_view
+- Nomina i topic in modo descrittivo (/aruco_camera_0, non /topic1)
+
+
+10. COMANDI ESSENZIALI RIASSUNTO
+================================================================================
+
+ros2 topic list                    -> Lista topic
+ros2 topic echo <topic>            -> Leggi dati
+ros2 topic hz <topic>              -> Frequenza
+ros2 topic info <topic>            -> Info topic
+ros2 interface show <msg_type>     -> Struttura messaggio
+ros2 topic pub <topic> <msg> '{}'  -> Pubblica dati
+rviz2                              -> Visualizza 3D
+rqt_image_view <topic>             -> Visualizza immagini
+
+
+================================================================================
+           FINE GUIDA - ROS 2 TOPICS
+================================================================================

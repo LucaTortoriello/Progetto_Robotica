@@ -5,14 +5,15 @@ Estratti da: Fondamenti di Robotica - Luca Tortoriello
 INDICE
 ------
 1. ROS 2 CLI - Nodi
-2. ROS 2 CLI - Topics  
-3. ROS 2 CLI - Services
-4. ROS 2 CLI - Actions
-5. ROS 2 - Creazione Pacchetti
-6. Colcon Build
-7. Setup e Source
-8. Directory e File
-9. Python - Install
+2. ROS 2 CLI - Actions
+3. ROS 2 - Creazione Pacchetti
+4. Colcon Build
+5. Setup e Source
+6. Directory e File
+7. Python - Install
+
+NOTE: 
+- Comandi avanzati per Topics e Services -> vedi: service/ROS2_Services_Guide.txt e topic/ROS2_Topics_Guide.txt
 
 ================================================================================
 
@@ -28,32 +29,7 @@ Descrizione: Esegui nodi ROS 2 e visualizza informazioni su di essi
   ros2 run my_py_pkg test_node
 
 
-2. ROS 2 CLI - TOPICS (Terminale ROS 2)
----------------------------------------
-Ambiente: Terminale bash/zsh (dopo aver fatto 'source')
-Descrizione: Gestisci e monitora i topic (canali di comunicazione) in ROS 2
-
-  ros2 topic list
-  ros2 topic list -t
-  ros2 topic echo /turtle1/cmd_vel
-  ros2 topic info /turtle1/cmd_vel
-  ros2 interface show geometry_msgs/msg/Twist
-  ros2 topic pub /turtle1/cmd_vel geometry_msgs/msg/Twist
-
-
-3. ROS 2 CLI - SERVICES (Terminale ROS 2)
-------------------------------------------
-Ambiente: Terminale bash/zsh (dopo aver fatto 'source')
-Descrizione: Chiama servizi e visualizza informazioni su di essi
-
-  ros2 service list
-  ros2 service type /clear
-  ros2 interface show turtlesim/srv/Spawn
-  ros2 interface show std_srvs/srv/Empty
-  ros2 service call /clear std_srvs/srv/Empty
-
-
-4. ROS 2 CLI - ACTIONS (Terminale ROS 2)
+2. ROS 2 CLI - ACTIONS (Terminale ROS 2)
 ----------------------------------------
 Ambiente: Terminale bash/zsh (dopo aver fatto 'source')
 Descrizione: Invia goal e visualizza informazioni sulle azioni
@@ -63,8 +39,7 @@ Descrizione: Invia goal e visualizza informazioni sulle azioni
   ros2 interface show turtlesim/action/RotateAbsolute
   ros2 action send_goal /turtle1/rotate_absolute \
 
-
-5. ROS 2 - CREAZIONE PACCHETTI (Terminale ROS 2)
+3. ROS 2 - CREAZIONE PACCHETTI (Terminale ROS 2)
 ------------------------------------------------
 Ambiente: Terminale bash/zsh (dopo aver fatto 'source')
 Descrizione: Crea nuovi pacchetti ROS 2
@@ -73,8 +48,7 @@ Descrizione: Crea nuovi pacchetti ROS 2
   ros2 pkg create my_bringup --build-type ament_cmake
   ros2 launch my_bringup action_app.launch.py
 
-
-6. COLCON BUILD (Terminale - nella root del workspace)
+4. COLCON BUILD (Terminale - nella root del workspace)
 ------------------------------------------------------
 Ambiente: Terminale bash/zsh (root della cartella ros2_ws)
 Descrizione: Compila e costruisce i pacchetti ROS 2
@@ -83,8 +57,7 @@ Descrizione: Compila e costruisce i pacchetti ROS 2
   colcon build --packages-select my_py_pkg
   colcon build --packages-select my_bringup
 
-
-7. SETUP E SOURCE (Terminale)
+5. SETUP E SOURCE (Terminale)
 -----------------------------
 Ambiente: Terminale bash/zsh
 Descrizione: Configurare l'ambiente ROS 2 per il workspace
@@ -93,8 +66,7 @@ Descrizione: Configurare l'ambiente ROS 2 per il workspace
   source /opt/ros/humble/setup.bash
   source ~/.bashrc
 
-
-8. DIRECTORY E FILE (Terminale)
+6. DIRECTORY E FILE (Terminale)
 -------------------------------
 Ambiente: Terminale bash/zsh
 Descrizione: Navigare e creare strutture di cartelle
@@ -106,8 +78,7 @@ Descrizione: Navigare e creare strutture di cartelle
   cd my_bringup
   mkdir launch
 
-
-9. PYTHON - INSTALL (Terminale bash/zsh)
+7. PYTHON - INSTALL (Terminale bash/zsh)
 ---------------------------------------
 Ambiente: Terminale bash/zsh
 Descrizione: Installa pacchetti Python necessari

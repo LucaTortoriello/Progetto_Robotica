@@ -1,5 +1,5 @@
 ================================================================================
-           GUIDA COMPLETA: ROS 2 SERVICES E LORO FUNZIONAMENTO
+           GUIDA: ROS 2 SERVICES
 ================================================================================
 
 1. INTRODUZIONE AI SERVICES
@@ -7,18 +7,10 @@
 
 I Service sono uno dei meccanismi di comunicazione principali in ROS 2. A 
 differenza dei Topic (comunicazione asimmetrica publish/subscribe), i Service 
-implementano un modello di comunicazione SINCRONO Request/Reply (Richiesta/Risposta).
+implementano un modello di comunicazione SINCRONO (Richiesta/Risposta).
 
 Un Service consente a un nodo client di inviare una richiesta a un nodo server 
 e aspettare una risposta specifica prima di continuare l'esecuzione.
-
-Caratteristiche principali:
-- Comunicazione sincrona (il client aspetta la risposta)
-- Modello Request/Response
-- One-to-One: un client con un server
-- Ideale per operazioni discrete e azioni immediate
-- Supporta timeout e gestione degli errori
-
 
 2. ARCHITETTURA CLIENT-SERVER
 ================================================================================
@@ -55,43 +47,6 @@ Sintassi:
 ---
 <tipo_dato> <nome_campo>  # Response
 ---
-
-ESEMPIO 1 - Servizio di somma:
----
-int32 a
-int32 b
----
-int32 sum
----
-
-ESEMPIO 2 - Servizio di movimento robotic:
----
-float32 x
-float32 y
-float32 z
----
-bool success
-string message
----
-
-ESEMPIO 3 - Servizio complesso:
----
-string goal_name
-int32[] trajectory
-float32 max_speed
----
-bool completed
-float32 execution_time
-string status
----
-
-Tipi di dati supportati:
-- Primitivi: bool, int8, int16, int32, int64, uint8, uint16, uint32, uint64
-- Float: float32, float64
-- String: string
-- Array: int32[], float32[] ecc...
-- Nested types: custom message types
-
 
 4. CREAZIONE DI UN SERVER IN PYTHON
 ================================================================================
@@ -133,7 +88,7 @@ if __name__ == '__main__':
     main()
 
 
-4.2 Esempio realista - TIAGO Robot:
+4.2 Esempio - TIAGO Robot:
 
 import rclpy
 from rclpy.node import Node
@@ -528,23 +483,7 @@ if __name__ == '__main__':
     main()
 
 
-10. DIFFERENZE: SERVICE vs TOPIC
-================================================================================
-
-CARACTERÍSTICHE          SERVICE              TOPIC
-================================================================================
-Tipo Comunicazione      Sincrono             Asincrono
-Modello                 Request/Response     Publish/Subscribe
-Connessione             1-to-1               N-to-N
-Attesa Risposta         SI (bloccante)       NO
-Uso Ideale              Operazioni discrete  Stream di dati
-Throughput              Basso-Medio          Alto
-Latenza                 Prevedibile          Variabile
-Complessità             Media                Bassa
-Uso Tipico              Comandi              Sensori/Stato
-
-
-11. TROUBLESHOOTING
+10. TROUBLESHOOTING
 ================================================================================
 
 Problema: "Service not available"
@@ -574,13 +513,284 @@ Soluzione:
 - Verificare la connettività di rete (per sistemi distribuiti)
 
 
-12. RISORSE E RIFERIMENTI
+12. ESERCITAZIONE PRATICA - TIAGO HEAD MOTION SERVICE
 ================================================================================
 
-- ROS 2 Official Documentation: https://docs.ros.org/
-- Service and Action Architecture: https://design.ros2.org/
-- Python ROS 2 API: https://docs.ros.org/en/iron/p/rclpy/
-- Service vs Action vs Topic: https://index.ros.org/doc/ros2/Concepts/Services-vs-Topics/
+Questa è un'esercitazione pratica basata su TIAGO robot che combina:
+- Movimento della testa del robot
+- Comunicazione via Service
+- Uso di SetBool interface standard di ROS 2
+
+12.1 Setup dell'esercitazione:
+
+# 1. Lanciare TIAGO in Gazebo
+ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
+
+# 2. Creare il package per il service
+ros2 pkg create move_head_service --build-type ament_python --dependencies rclpy
+
+12.2 Struttura del Package move_head_service:
+move_head_service/
+├── move_head_service/
+│   ├── __init__.py
+│   ├── head_service_server.py
+│   └── head_service_client.py
+├── package.xml
+├── setup.py
+└── setup.cfg
+
+12.3 Server Implementation - head_service_server.py:
+
+#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from example_interfaces.srv import SetBool
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from rclpy.publisher import Publisher
+import time
+
+class HeadMotionServer(Node):
+    def __init__(self):
+        super().__init__('head_motion_server')
+        
+        # Service
+        self.srv = self.create_service(
+            SetBool,
+            'play_motion_service',
+            self.head_motion_callback
+        )
+        
+        # Publisher per il comando della testa
+        self.head_pub: Publisher = self.create_publisher(
+            JointTrajectory,
+            '/head_controller/joint_trajectory',
+            10
+        )
+        
+        self.get_logger().info('Head Motion Service Server avviato')
+        self.head_position = 'neutral'
+
+    def head_motion_callback(self, request, response):
+        """
+        Callback per il service SetBool.
+        - request.data = True: muovi la testa
+        - request.data = False: testa neutra
+        """
+        self.get_logger().info(f'Comando ricevuto: move={request.data}')
+        
+        try:
+            if request.data:
+                # Muovi la testa
+                self.move_head_down()
+                response.success = True
+                response.message = "Testa mossa verso il basso"
+                self.head_position = 'down'
+            else:
+                # Testa in posizione neutra
+                self.move_head_neutral()
+                response.success = True
+                response.message = "Testa in posizione neutra"
+                self.head_position = 'neutral'
+                
+        except Exception as e:
+            response.success = False
+            response.message = f"Errore nel movimento: {str(e)}"
+            self.get_logger().error(response.message)
+        
+        return response
+
+    def move_head_down(self):
+        """Muove la testa verso il basso"""
+        trajectory = JointTrajectory()
+        trajectory.joint_names = ['head_1_joint', 'head_2_joint']
+        
+        point = JointTrajectoryPoint()
+        point.positions = [6.67e-07, -0.86]  # Posizione bassa
+        point.time_from_start.sec = 2
+        
+        trajectory.points.append(point)
+        
+        self.get_logger().info('Movimento testa: DOWN')
+        self.head_pub.publish(trajectory)
+
+    def move_head_neutral(self):
+        """Muove la testa in posizione neutra"""
+        trajectory = JointTrajectory()
+        trajectory.joint_names = ['head_1_joint', 'head_2_joint']
+        
+        point = JointTrajectoryPoint()
+        point.positions = [0.0, 0.0]  # Posizione neutra
+        point.time_from_start.sec = 1
+        
+        trajectory.points.append(point)
+        
+        self.get_logger().info('Movimento testa: NEUTRAL')
+        self.head_pub.publish(trajectory)
+
+def main(args=None):
+    rclpy.init(args=args)
+    server = HeadMotionServer()
+    
+    try:
+        rclpy.spin(server)
+    except KeyboardInterrupt:
+        server.get_logger().info('Server terminato dall\'utente')
+    
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+
+
+12.4 Client Implementation - head_service_client.py:
+
+#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from example_interfaces.srv import SetBool
+import sys
+
+class HeadMotionClient(Node):
+    def __init__(self):
+        super().__init__('head_motion_client')
+        self.client = self.create_client(
+            SetBool,
+            'play_motion_service'
+        )
+        
+        # Attesa che il servizio sia disponibile
+        while not self.client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service non disponibile, attendo...')
+
+    def send_command(self, move: bool):
+        """Invia comando di movimento della testa"""
+        request = SetBool.Request()
+        request.data = move
+        
+        action = "muovi la testa" if move else "testa neutra"
+        self.get_logger().info(f'Invio comando: {action}')
+        
+        response = self.client.call(request)
+        
+        self.get_logger().info(f'Risposta: {response.message}')
+        return response.success
+
+def main(args=None):
+    rclpy.init(args=args)
+    client = HeadMotionClient()
+    
+    # Esempio: muovi la testa
+    print("\n=== MOVIMENTO TESTA DOWN ===")
+    client.send_command(True)
+    
+    # Attendi un po'
+    import time
+    time.sleep(3)
+    
+    # Riporta allo stato neutro
+    print("\n=== RESTITUISCI TESTA A NEUTRO ===")
+    client.send_command(False)
+    
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+
+
+12.5 Comandi per eseguire l'esercitazione:
+
+# Terminale 1: Avvia TIAGO
+ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
+
+# Terminale 2: Avvia il server
+ros2 run move_head_service head_service_server
+
+# Terminale 3: Opzione A - Esegui il client Python
+ros2 run move_head_service head_service_client
+
+# Terminale 3: Opzione B - Usa il comando da terminale direttamente
+ros2 service call /play_motion_service example_interfaces/srv/SetBool "{data: true}"
+
+# Dopo 3 secondi, riporta allo stato neutro
+ros2 service call /play_motion_service example_interfaces/srv/SetBool "{data: false}"
+
+
+12.6 Interfaccia SetBool:
+
+La interfaccia SetBool è una interfaccia standard di ROS 2 (example_interfaces).
+
+Definizione:
+---
+bool data
+---
+bool success
+string message
+---
+
+Uso:
+- Request: SetBool.Request() con request.data (True/False)
+- Response: response.success (successo operazione) + response.message (messaggio descrittivo)
+
+12.7 Struttura del package.xml:
+
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>move_head_service</name>
+  <version>0.0.0</version>
+  <description>Service per il controllo della testa di TIAGO</description>
+  <maintainer email="user@example.com">Your Name</maintainer>
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+  <depend>rclpy</depend>
+  <depend>example_interfaces</depend>
+  <depend>trajectory_msgs</depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
+
+
+12.8 Messaggi importanti:
+
+a) JointTrajectory (trajectory_msgs/msg/JointTrajectory)
+   - Usato per inviare comandi di movimento agli articoli
+   - Campo: joint_names (lista dei nomi articoli)
+   - Campo: points (lista di JointTrajectoryPoint)
+
+b) JointTrajectoryPoint (trajectory_msgs/msg/JointTrajectoryPoint)
+   - positions: array di posizioni (in radianti)
+   - time_from_start: tempo dal start della traiettoria
+
+c) SetBool (example_interfaces/srv/SetBool)
+   - Service semplice per attivare/disattivare funzioni
+   - Request: bool data
+   - Response: bool success, string message
+
+
+12.9 Output atteso:
+Server:
+[INFO] [head_motion_server]: Head Motion Service Server avviato
+[INFO] [head_motion_server]: Comando ricevuto: move=True
+[INFO] [head_motion_server]: Movimento testa: DOWN
+[INFO] [head_motion_server]: Comando ricevuto: move=False
+[INFO] [head_motion_server]: Movimento testa: NEUTRAL
+
+Client:
+=== MOVIMENTO TESTA DOWN ===
+[INFO] [head_motion_client]: Invio comando: muovi la testa
+[INFO] [head_motion_client]: Risposta: Testa mossa verso il basso
+
+=== RESTITUISCI TESTA A NEUTRO ===
+[INFO] [head_motion_client]: Invio comando: testa neutra
+[INFO] [head_motion_client]: Risposta: Testa in posizione neutra
 
 ================================================================================
            FINE GUIDA - ROS 2 SERVICES

@@ -67,25 +67,31 @@ Nota:
 
 
 6) Parte del server:
-Dopo aver inizializzato Tiago su Gazebo abbiamo fatto motion di esempio mediante comando ros2 run move_head_service client_Tiago (lo vedi nelo ReadMe Tiago).
+Dopo aver inizializzato Tiago su Gazebo abbiamo fatto una motion di esempio con il comando:
+- ros2 run play_motion2 run_motion unfold_arm
 Server e client vanno sempre insieme
 -----------------------------------------------------------------------------------------------
 ACTION
 Utili per rimuovere parte fisica di un robot perchè hanno meccanismo di feedback (controllare cosa sta succedendo) e cancel (funzione x interrompere un certo processo)
 
 - ESERCITAZIONE
-obiettivo: vogliamo che tiago muova la testa lentamente in modo da non perdersi gli aruco
-goal: range min/max per movimento orizzontale testa e step temporale --> comando send_goal (riga 23 ReadMe)
+Obiettivo: vogliamo che tiago muova la testa lentamente in modo da non perdersi gli aruco
+Goal: range min/max per movimento orizzontale testa e step temporale.
 
-il parametro time_from_start indica quanto tempo ci mette prima di iniziare il movimento
+- ros2 action send_goal /head_controller/follow_joint_trajectory control_msgs/action/FollowJointTrajectory
+ "{trajectory: {joint_names: ['head_1_joint', 'head_2_joint'], points: [{positions: [6.67e-07, -0.86], time_from_start: {sec: 2}}]}}"
 
-riga26 x creazione package dentro cartella progetto e dentro src
+Il parametro time_from_start indica quanto tempo ci mette prima di iniziare il movimento
 
-creiamo cartella action dentro my_robot_interfaces --> IMPORTANTE: le action vanno sempre dentro action, mentre i service sempre dentro srv 
+Creazione package dentro cartella progetto/src:
+- ros2 pkg create my_robot_interfaces --build-type ament_cmake
+- ros2 pkg create move_head_action --build-type ament_python --dependencies rclpy
+
+Creiamo cartella action dentro my_robot_interfaces --> IMPORTANTE: le action vanno sempre dentro action, mentre i service sempre dentro srv 
 
 Dentro MoveHead.action dobbiamo scrivere il goal, result e feedback
 
 
-dopo aver aggiunto le righe in cmakelist e package.xml abbiamo fatto il colcon build e source nel workspace (con il source l'action viene riconosciuta ovunque)
+Dopo aver aggiunto le righe in cmakelist e package.xml abbiamo fatto il colcon build e source nel workspace (con il source l'action viene riconosciuta ovunque)
 
-poi creazione di nuovo package in src 
+Poi creazione di nuovo package in src 

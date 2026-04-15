@@ -28,7 +28,7 @@ class MoveHeadClient(Node):
         while not self._action_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info("Attendo il server /move_head...")
 
-        # Creiamo il messaggio goal
+        # Creiamo il messaggio goal--> riconosce tutto quello che si trova nella sezione goal  nella definizione della action (MoveHead.action)
         goal_msg = MoveHead.Goal()
         goal_msg.min = min_pos
         goal_msg.max = max_pos
@@ -45,7 +45,7 @@ class MoveHeadClient(Node):
         self._goal_handle = self._send_goal_future.result()
 
         if not self._goal_handle.accepted:
-            self.get_logger().error("Goal rifiutato dal server!")
+            self.get_logger().error("Goal rifiutato dal server!") # nel caso in cui viene dato un valore non valido (esempio fuori dal range)
             return
 
         self.get_logger().info("Goal accettato, inizio movimento...")
@@ -75,7 +75,7 @@ def main(args=None):
     client = MoveHeadClient()
 
     # Invio goal: movimento oscillante da -0.217 a 0.217 con passo 0.05
-    client.send_goal(-0.217, 0.217, 0.05)
+    client.send_goal(-0.217, 0.217, 0.05) #invio il goal dal main, in questo modo posso decidere i parametri del movimento direttamente da qui senza dover modificare il server
 
     # Pulizia
     client.destroy_node()

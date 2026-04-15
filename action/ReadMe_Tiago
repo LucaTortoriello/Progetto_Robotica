@@ -23,17 +23,17 @@ Pubblicare su action /head_controller/follow_joint_trajectory
 ros2 action send_goal /head_controller/follow_joint_trajectory control_msgs/action/FollowJointTrajectory "{trajectory: {joint_names: ['head_1_joint', 'head_2_joint'], points: [{positions: [6.67e-07, -0.86], time_from_start: {sec: 2}}]}}"
 
 Creazione pkg: 
-ros2 pkg create my_robot_interfaces --build-type ament_python 
+ros2 pkg create my_robot_interfaces --build-type ament_cmake
 ros2 pkg create move_head_action --build-type ament_python --dependencies rclpy
 
-Da aggiungere a CMakeLists.txt
+Da aggiungere a CMakeLists.txt sotto riga 15
   find_package(rosidl_default_generators REQUIRED)
 
   rosidl_generate_interfaces(${PROJECT_NAME}
     "action/MoveHead.action"
   )
   
-Da aggiungere a package.xml:
+Da aggiungere a package.xml sotto riga 10:
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
   <exec_depend>rosidl_default_runtime</exec_depend>

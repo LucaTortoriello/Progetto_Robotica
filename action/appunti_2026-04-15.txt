@@ -67,8 +67,10 @@ Nota:
 
 
 6) Parte del server:
-Dopo aver inizializzato Tiago su Gazebo abbiamo fatto motion di esempio mediante comando ros2 run move_head_service client_Tiago (lo vedi nelo ReadMe Tiago).
+Dopo aver inizializzato Tiago su Gazebo abbiamo fatto motion di esempio mediante comando ros2 run move_head_service client_Tiago (lo vedi nelo ReadMe Tiago). 
+
 
 -----------------------------------------------------------------------------------------------
 
+ACTION
 

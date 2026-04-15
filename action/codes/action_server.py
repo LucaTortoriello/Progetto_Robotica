@@ -15,13 +15,13 @@ class HeadActionServer(Node):
     def __init__(self):
         super().__init__('head_action_server')
 
-        # Action server
+        # Action server 
         self._action_server = ActionServer(
             self,
-            MoveHead,
+            MoveHead, #interface personalizzata
             'move_head',
-            self.execute_callback
-        )
+            self.execute_callback # callback da eseguire quando arriva un goal
+         )   
 
         # Client verso TIAGO
         self.follow_client = ActionClient(
@@ -30,16 +30,16 @@ class HeadActionServer(Node):
             '/head_controller/follow_joint_trajectory'
         )
 
-        self.joint_names = ['head_1_joint', 'head_2_joint']
-        self.head2_fixed = -0.57
-
+        self.joint_names = ['head_1_joint', 'head_2_joint'] # nome giunti 
+        self.head2_fixed = -0.57  # posizione fissa per il secondo giunto della testa (guarda verso il basso)
         self.get_logger().info("Action server custom pronto.")
 
     # ------------------------------------------------------
-    def move_head(self, pos1):
+    def move_head(self, pos1): # funzione per muovere la testa, pos1 è la posizione del primo giunto della testa
         while not self.follow_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info("Attendo controller...")
 
+        # Creazione del messaggio di traiettoria
         traj = JointTrajectory()
         traj.joint_names = self.joint_names
 
@@ -52,8 +52,8 @@ class HeadActionServer(Node):
         goal = FollowJointTrajectory.Goal()
         goal.trajectory = traj
 
-        future = self.follow_client.send_goal_async(goal)
-        rclpy.spin_until_future_complete(self, future)
+        future = self.follow_client.send_goal_async(goal) # serve per avere un feedback quando il goal è stato accettato o rifiutato (rispettivamente return True o False)
+        rclpy.spin_until_future_complete(self, future) 
 
         goal_handle = future.result()
         if not goal_handle.accepted:
@@ -65,7 +65,7 @@ class HeadActionServer(Node):
         return True
 
     # ------------------------------------------------------
-    def execute_callback(self, goal_handle):
+    def execute_callback(self, goal_handle): # callback da eseguire quando arriva un goal, goal_handle contiene tutte le informazioni del goal ricevuto
         self.get_logger().info("Goal ricevuto!")
 
         feedback = MoveHead.Feedback()
@@ -84,7 +84,7 @@ class HeadActionServer(Node):
             goal_handle.publish_feedback(feedback)
 
             # Aggiornamento
-            current += goal_handle.request.step * direction
+            current += goal_handle.request.step * direction # aggiorno la posizione attuale in base al passo e alla direzione
 
             if current <= goal_handle.request.min:
                 direction = 1

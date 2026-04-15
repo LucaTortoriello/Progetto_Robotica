@@ -523,11 +523,10 @@ Questa è un'esercitazione pratica basata su TIAGO robot che combina:
 
 12.1 Setup dell'esercitazione:
 
-# 1. Lanciare TIAGO in Gazebo
-ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
-
-# 2. Creare il package per il service
+# 1. Creare il package per il service
 ros2 pkg create move_head_service --build-type ament_python --dependencies rclpy
+
+# 2. Avvio TIAGO + esecuzione server/client: vedi sezione 12.5
 
 12.2 Struttura del Package move_head_service:
 move_head_service/
@@ -769,10 +768,7 @@ b) JointTrajectoryPoint (trajectory_msgs/msg/JointTrajectoryPoint)
    - positions: array di posizioni (in radianti)
    - time_from_start: tempo dal start della traiettoria
 
-c) SetBool (example_interfaces/srv/SetBool)
-   - Service semplice per attivare/disattivare funzioni
-   - Request: bool data
-   - Response: bool success, string message
+Nota: SetBool e gia descritto in dettaglio nella sezione 12.6.
 
 
 12.9 Output atteso:

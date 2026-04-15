@@ -1,4 +1,5 @@
-TOPIC
+COMANDI PER IL LANCIO DI TIAGO
+
 Launch tiago:
 ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
 

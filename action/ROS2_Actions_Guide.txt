@@ -1,0 +1,112 @@
+INTRODUZIONE ALLE ACTIONS
+================================================================================
+Le Action sono usate in ROS 2 per task lunghi o progressivi.
+A differenza dei Service (request/response singola), una Action permette:
+- Invio di un goal
+- Feedback durante l'esecuzione
+- Risultato finale
+- Possibilita di cancellare il goal
+
+Quando usare cosa:
+- Topic: stream continuo di dati
+- Service: operazione rapida con risposta immediata
+- Action: operazione lunga con monitoraggio stato
+
+ARCHITETTURA ACTION CLIENT-SERVER
+================================================================================
+
+Action Server:
+- riceve un goal dal client
+- accetta o rifiuta il goal
+- esegue il task
+- pubblica feedback
+- invia result finale
+
+Action Client:
+- invia il goal
+- legge feedback durante l'esecuzione
+- attende result finale
+- puo richiedere cancel del goal
+
+Componenti principali di una Action:
+- Goal
+- Result
+- Feedback
+
+CREAZIONE DI UNA ACTION (.action)
+================================================================================
+Formato: <package>/action/<NomeAction>.action
+
+Esempio MoveHead.action:
+---
+float32 min
+float32 max
+float32 step
+---
+bool success
+string message
+---
+float32 current_position
+bool moving
+---
+
+COMANDI ROS 2 PER ACTION
+================================================================================
+
+# Lista tutte le action disponibili
+ros2 action list
+
+# Lista action con tipo
+ros2 action list -t
+
+# Mostra info su una action
+ros2 action info <nome_action> -t
+
+# Mostra struttura dell'interfaccia action
+ros2 interface show <package>/action/<ActionName>
+
+# Invia un goal
+ros2 action send_goal <nome_action> <tipo_action> "{campi}"
+
+# Invia un goal mostrando feedback
+ros2 action send_goal <nome_action> <tipo_action> "{campi}" --feedback
+
+
+ESEMPI RAPIDI
+================================================================================
+
+# Controller testa TIAGo (FollowJointTrajectory)
+ros2 action send_goal /head_controller/follow_joint_trajectory control_msgs/action/FollowJointTrajectory "{trajectory: {joint_names: ['head_1_joint', 'head_2_joint'], points: [{positions: [6.67e-07, -0.86], time_from_start: {sec: 2}}]}}"
+
+# Action custom MoveHead
+ros2 action send_goal /move_head my_robot_interfaces/action/MoveHead "{min: -0.217, max: 0.217, step: 0.05}"
+
+
+ESERCITAZIONE 4 - TIAGO ACTION
+================================================================================
+Riferimento: Esercitazioni/Esercitazione4-Action/ReadMe_Tiago
+
+1) Avvio simulazione:
+ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
+
+2) Motion pronta utile per test:
+ros2 run play_motion2 run_motion unfold_arm
+
+3) Crea package per action custom:
+ros2 pkg create my_robot_interfaces --build-type ament_python
+ros2 pkg create move_head_action --build-type ament_python --dependencies rclpy
+
+4) Goal verso action custom:
+ros2 action send_goal /move_head my_robot_interfaces/action/MoveHead "{min: -0.217, max: 0.217, step: 0.05}"
+
+5) Goal verso controller testa:
+ros2 action send_goal /head_controller/follow_joint_trajectory control_msgs/action/FollowJointTrajectory "{trajectory: {joint_names: ['head_1_joint', 'head_2_joint'], points: [{positions: [6.67e-07, -0.86], time_from_start: {sec: 2}}]}}"
+
+
+NOTE
+================================================================================
+- Esegui sempre il source dell'ambiente prima dei comandi ROS 2.
+- Se una action non compare in lista, verifica che il server sia avviato
+- Se il tipo non coincide, controlla il nome esatto dell'interfaccia action
+- Per debug rapido usa: ros2 action list -t e ros2 action info <nome_action> -t
+

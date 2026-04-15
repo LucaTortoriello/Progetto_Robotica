@@ -1,10 +1,5 @@
+INTRODUZIONE AI SERVICES
 ================================================================================
-           GUIDA: ROS 2 SERVICES
-================================================================================
-
-1. INTRODUZIONE AI SERVICES
-================================================================================
-
 I Service sono uno dei meccanismi di comunicazione principali in ROS 2. A 
 differenza dei Topic (comunicazione asimmetrica publish/subscribe), i Service 
 implementano un modello di comunicazione SINCRONO (Richiesta/Risposta).
@@ -12,30 +7,30 @@ implementano un modello di comunicazione SINCRONO (Richiesta/Risposta).
 Un Service consente a un nodo client di inviare una richiesta a un nodo server 
 e aspettare una risposta specifica prima di continuare l'esecuzione.
 
-2. ARCHITETTURA CLIENT-SERVER
+ARCHITETTURA CLIENT-SERVER
 ================================================================================
 
-2.1 Server
+Server
    - Riceve una richiesta da un client
    - Elabora la richiesta
    - Invia una risposta
    - Rimane in attesa di nuove richieste
    - Può servire più client in sequenza
 
-2.2 Client
+Client
    - Invia una richiesta al server
    - Attende la risposta (blocca l'esecuzione)
    - Riceve i dati di risposta
    - Continua l'esecuzione dopo la risposta
    - Può aspettare con timeout
 
-2.3 Definizione Interface
+Definizione Interface
    - Request: struttura dati della richiesta
    - Response: struttura dati della risposta
    - Definite in file .srv (Service Definition)
 
 
-3. CREAZIONE DI UN SERVICE (.srv)
+CREAZIONE DI UN SERVICE (.srv)
 ================================================================================
 
 Un file .srv definisce la struttura della richiesta e della risposta.
@@ -48,190 +43,9 @@ Sintassi:
 <tipo_dato> <nome_campo>  # Response
 ---
 
-4. CREAZIONE DI UN SERVER IN PYTHON
+
+COMANDI UTILI DA TERMINALE
 ================================================================================
-
-4.1 Struttura generale:
-
-import rclpy
-from rclpy.node import Node
-from my_package.srv import MyService  # Import del service
-
-class MyServiceServer(Node):
-    def __init__(self):
-        super().__init__('my_service_server')
-        # Creazione del service
-        self.srv = self.create_service(
-            MyService,                          # Tipo di service
-            'my_service',                       # Nome del service
-            self.service_callback               # Callback function
-        )
-        self.get_logger().info('Server pronto: my_service')
-
-    def service_callback(self, request, response):
-        # Elaborazione della richiesta
-        self.get_logger().info(f'Richiesta ricevuta: {request}')
-        
-        # Logica del service
-        response.result = request.input * 2
-        response.success = True
-        
-        return response
-
-def main(args=None):
-    rclpy.init(args=args)
-    server = MyServiceServer()
-    rclpy.spin(server)
-    rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()
-
-
-4.2 Esempio - TIAGO Robot:
-
-import rclpy
-from rclpy.node import Node
-from my_tiago.srv import MoveTo
-
-class TiagoMovementServer(Node):
-    def __init__(self):
-        super().__init__('tiago_movement_server')
-        self.srv = self.create_service(
-            MoveTo,
-            'move_to_position',
-            self.move_to_callback
-        )
-        self.get_logger().info('TIAGO Movement Server avviato')
-
-    def move_to_callback(self, request, response):
-        self.get_logger().info(
-            f'Movimento verso: x={request.x}, y={request.y}, z={request.z}'
-        )
-        
-        # Simulazione movimento
-        try:
-            # Qui entrerebbe il codice reale di movimento
-            # self.move_robot_arm(request.x, request.y, request.z)
-            
-            response.success = True
-            response.message = f'Movimento completato verso ({request.x}, {request.y}, {request.z})'
-        except Exception as e:
-            response.success = False
-            response.message = f'Errore nel movimento: {str(e)}'
-        
-        return response
-
-
-5. CREAZIONE DI UN CLIENT IN PYTHON
-================================================================================
-
-5.1 Struttura generale:
-
-import rclpy
-from rclpy.node import Node
-from my_package.srv import MyService
-
-class MyServiceClient(Node):
-    def __init__(self):
-        super().__init__('my_service_client')
-        # Creazione del client
-        self.client = self.create_client(
-            MyService,
-            'my_service'
-        )
-        
-        # Attesa che il servizio sia disponibile
-        while not self.client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Servizio non disponibile, attendo...')
-        
-        self.get_logger().info('Servizio disponibile, invio richiesta')
-
-    def send_request(self, value):
-        request = MyService.Request()
-        request.input = value
-        
-        # Invio asincrono della richiesta
-        self.future = self.client.call_async(request)
-        self.future.add_done_callback(self.response_callback)
-
-    def response_callback(self, future):
-        try:
-            response = future.result()
-            self.get_logger().info(f'Risposta ricevuta: {response}')
-        except Exception as e:
-            self.get_logger().error(f'Errore: {e}')
-
-def main(args=None):
-    rclpy.init(args=args)
-    client = MyServiceClient()
-    client.send_request(5)
-    rclpy.spin(client)
-    rclpy.shutdown()
-
-
-5.2 Versione sincrona (bloccante):
-
-import rclpy
-from rclpy.node import Node
-from my_package.srv import MyService
-
-def main(args=None):
-    rclpy.init(args=args)
-    node = Node('simple_client')
-    
-    client = node.create_client(MyService, 'my_service')
-    
-    # Attesa che il servizio sia disponibile
-    while not client.wait_for_service(timeout_sec=1.0):
-        node.get_logger().info('Servizio non disponibile...')
-    
-    # Creazione richiesta
-    request = MyService.Request()
-    request.input = 10
-    
-    # Invio sincrono (il programma si blocca qui)
-    response = client.call(request)
-    
-    node.get_logger().info(f'Risultato: {response.result}')
-    rclpy.shutdown()
-
-
-5.3 Versione con timeout:
-
-import rclpy
-from rclpy.node import Node
-from my_package.srv import MyService
-import time
-
-def main(args=None):
-    rclpy.init(args=args)
-    node = Node('client_timeout')
-    
-    client = node.create_client(MyService, 'my_service')
-    
-    # Attesa con timeout
-    if not client.wait_for_service(timeout_sec=5.0):
-        node.get_logger().error('Servizio non disponibile dopo 5 secondi!')
-        rclpy.shutdown()
-        return
-    
-    request = MyService.Request()
-    request.input = 20
-    
-    try:
-        response = client.call(request)
-        node.get_logger().info(f'Successo: {response.result}')
-    except Exception as e:
-        node.get_logger().error(f'Errore nella chiamata: {e}')
-    
-    rclpy.shutdown()
-
-
-6. COMANDI UTILI DA TERMINALE
-================================================================================
-
-6.1 Listing e Ispezione dei Service:
 
 # Lista tutti i service disponibili
 ros2 service list
@@ -249,7 +63,7 @@ ros2 service find <tipo_service>
 ros2 interface show <package>/srv/<ServiceName>
 
 
-6.2 Chiamare un Service da Terminale:
+Chiamare un Service da Terminale:
 
 # Sintassi generale
 ros2 service call <nome_service> <tipo> '{campi}'
@@ -269,7 +83,7 @@ ros2 service call /example_service package/srv/Example \
   '{field1: value1, field2: value2}'
 
 
-6.3 Debugging e Monitoring:
+Debugging e Monitoring:
 
 # Monitora tutte le chiamate a un service
 ros2 service list --count
@@ -284,10 +98,8 @@ ros2 topic list
 rqt_service_caller  # GUI interattiva
 
 
-7. CICLO DI VITA DI UNA CHIAMATA A SERVICE
+CICLO DI VITA DI UNA CHIAMATA A SERVICE
 ================================================================================
-
-Sequenza temporale:
 
 1. SERVER CREATION
    - Server registra il service con il middleware ROS 2
@@ -301,8 +113,8 @@ Sequenza temporale:
 
 3. REQUEST TRANSMISSION
    - Client prepara la richiesta con i dati
-   - Client invia la richiesta al server via middleware
-   - Client si blocca aspettando la risposta (o registra callback)
+   - Invia la richiesta al server via middleware
+   - Si blocca aspettando la risposta (o registra callback)
 
 4. SERVER PROCESSING
    - Server riceve la richiesta
@@ -323,471 +135,56 @@ Sequenza temporale:
    - Se non più usato, il client può liberare risorse
    - Se server termina, nuove richieste falliscono
 
-
-8. BEST PRACTICES
+CONSIGLI UTILI
 ================================================================================
 
-8.1 Design di Service:
+Design di Service:
 - Usa service per operazioni DISCRETE (completare/fallire)
 - Usa topic per STREAM di dati continui
 - Mantieni request/response SEMPLICI ed ESSENZIALI
 - Evita service per operazioni che richiedono UPDATE CONTINUI
 
-8.2 Implementazione:
+Implementazione:
 - SEMPRE aspetta che il servizio sia disponibile (wait_for_service)
 - Implementa TIMEOUT per evitare blocchi indefiniti
 - Usa try/except per gestire eccezioni
 - Log appropriati per debugging
 - Documenta il servizio nella docstring
 
-8.3 Performance:
+Performance:
 - Service sincroni possono bloccare il nodo
 - Usa callback asincroni se possibile
 - Evita operazioni lunghe nel callback del server
 - Monitora i tempi di risposta
 
-8.4 Sicurezza:
+Sicurezza:
 - Valida sempre i dati ricevuti nel server
 - Implementa controlli dei parametri
 - Gestisci eccezioni per evità crash
 - Log di tutte le operazioni critiche
 
 
-9. ESEMPIO COMPLETO - TIAGO ROBOT
-================================================================================
-
-9.1 Definizione Service (my_tiago/srv/GripperControl.srv):
----
-bool open
-float32 force
----
-bool success
-string status
----
-
-9.2 Server Implementation:
-
-#!/usr/bin/env python3
-import rclpy
-from rclpy.node import Node
-from my_tiago.srv import GripperControl
-
-class GripperServer(Node):
-    def __init__(self):
-        super().__init__('gripper_server')
-        self.srv = self.create_service(
-            GripperControl,
-            'gripper_control',
-            self.gripper_callback
-        )
-        self.get_logger().info('Gripper Control Server Online')
-        self.gripper_state = 'closed'
-
-    def gripper_callback(self, request, response):
-        self.get_logger().info(
-            f'Comando ricevuto: open={request.open}, force={request.force}'
-        )
-        
-        try:
-            if request.open:
-                # Logica per aprire il gripper
-                self.gripper_state = 'open'
-                response.status = 'Gripper aperto'
-            else:
-                # Logica per chiudere il gripper
-                if request.force > 100:
-                    response.status = 'Gripper chiuso con forza controllata'
-                else:
-                    response.status = 'Forza non valida'
-                    response.success = False
-                    return response
-                self.gripper_state = 'closed'
-            
-            response.success = True
-        except Exception as e:
-            response.success = False
-            response.status = f'Errore: {str(e)}'
-            self.get_logger().error(response.status)
-        
-        return response
-
-def main(args=None):
-    rclpy.init(args=args)
-    server = GripperServer()
-    rclpy.spin(server)
-    rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()
-
-9.3 Client Implementation:
-
-#!/usr/bin/env python3
-import rclpy
-from rclpy.node import Node
-from my_tiago.srv import GripperControl
-
-class GripperClient(Node):
-    def __init__(self):
-        super().__init__('gripper_client')
-        self.client = self.create_client(
-            GripperControl,
-            'gripper_control'
-        )
-        
-        # Attendi disponibilità del servizio
-        while not self.client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Gripper service non disponibile...')
-
-    def open_gripper(self, force=50.0):
-        request = GripperControl.Request()
-        request.open = True
-        request.force = force
-        
-        self.get_logger().info(f'Apertura gripper con forza {force}...')
-        response = self.client.call(request)
-        
-        if response.success:
-            self.get_logger().info(f'✓ {response.status}')
-            return True
-        else:
-            self.get_logger().error(f'✗ {response.status}')
-            return False
-
-    def close_gripper(self, force=75.0):
-        request = GripperControl.Request()
-        request.open = False
-        request.force = force
-        
-        self.get_logger().info(f'Chiusura gripper con forza {force}...')
-        response = self.client.call(request)
-        
-        if response.success:
-            self.get_logger().info(f'✓ {response.status}')
-            return True
-        else:
-            self.get_logger().error(f'✗ {response.status}')
-            return False
-
-def main(args=None):
-    rclpy.init(args=args)
-    client = GripperClient()
-    
-    # Esecuzione comandi
-    client.open_gripper(force=60.0)
-    client.close_gripper(force=80.0)
-    
-    rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()
-
-
-10. TROUBLESHOOTING
+RISOLUZIONE PROBLEMI
 ================================================================================
 
 Problema: "Service not available"
-Soluzione:
 - Verificare che il server sia in esecuzione (ros2 node list)
 - Controllare il nome del service (ros2 service list)
 - Aumentare il timeout in wait_for_service
 - Verificare il namespace del service
 
 Problema: "Timeout nella risposta"
-Soluzione:
 - Il server è troppo lento
 - Aumentare il timeout
 - Debuggare la logica del server
 - Verificare se il server è bloccato
 
 Problema: "Tipi di dato non corrispondono"
-Soluzione:
 - Rigenerare i package Python dopo modifica .srv
 - Importare il tipo corretto nel client/server
 - Verificare la versione dei package
 
 Problema: "Client non riceve la risposta"
-Soluzione:
 - Verificare che la risposta sia completamente inizializzata
 - Controllare che il server ritorna effettivamente la risposta
 - Verificare la connettività di rete (per sistemi distribuiti)
-
-
-12. ESERCITAZIONE PRATICA - TIAGO HEAD MOTION SERVICE
-================================================================================
-
-Questa è un'esercitazione pratica basata su TIAGO robot che combina:
-- Movimento della testa del robot
-- Comunicazione via Service
-- Uso di SetBool interface standard di ROS 2
-
-12.1 Setup dell'esercitazione:
-
-# 1. Creare il package per il service
-ros2 pkg create move_head_service --build-type ament_python --dependencies rclpy
-
-# 2. Avvio TIAGO + esecuzione server/client: vedi sezione 12.5
-
-12.2 Struttura del Package move_head_service:
-move_head_service/
-├── move_head_service/
-│   ├── __init__.py
-│   ├── head_service_server.py
-│   └── head_service_client.py
-├── package.xml
-├── setup.py
-└── setup.cfg
-
-12.3 Server Implementation - head_service_server.py:
-
-#!/usr/bin/env python3
-import rclpy
-from rclpy.node import Node
-from example_interfaces.srv import SetBool
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from rclpy.publisher import Publisher
-import time
-
-class HeadMotionServer(Node):
-    def __init__(self):
-        super().__init__('head_motion_server')
-        
-        # Service
-        self.srv = self.create_service(
-            SetBool,
-            'play_motion_service',
-            self.head_motion_callback
-        )
-        
-        # Publisher per il comando della testa
-        self.head_pub: Publisher = self.create_publisher(
-            JointTrajectory,
-            '/head_controller/joint_trajectory',
-            10
-        )
-        
-        self.get_logger().info('Head Motion Service Server avviato')
-        self.head_position = 'neutral'
-
-    def head_motion_callback(self, request, response):
-        """
-        Callback per il service SetBool.
-        - request.data = True: muovi la testa
-        - request.data = False: testa neutra
-        """
-        self.get_logger().info(f'Comando ricevuto: move={request.data}')
-        
-        try:
-            if request.data:
-                # Muovi la testa
-                self.move_head_down()
-                response.success = True
-                response.message = "Testa mossa verso il basso"
-                self.head_position = 'down'
-            else:
-                # Testa in posizione neutra
-                self.move_head_neutral()
-                response.success = True
-                response.message = "Testa in posizione neutra"
-                self.head_position = 'neutral'
-                
-        except Exception as e:
-            response.success = False
-            response.message = f"Errore nel movimento: {str(e)}"
-            self.get_logger().error(response.message)
-        
-        return response
-
-    def move_head_down(self):
-        """Muove la testa verso il basso"""
-        trajectory = JointTrajectory()
-        trajectory.joint_names = ['head_1_joint', 'head_2_joint']
-        
-        point = JointTrajectoryPoint()
-        point.positions = [6.67e-07, -0.86]  # Posizione bassa
-        point.time_from_start.sec = 2
-        
-        trajectory.points.append(point)
-        
-        self.get_logger().info('Movimento testa: DOWN')
-        self.head_pub.publish(trajectory)
-
-    def move_head_neutral(self):
-        """Muove la testa in posizione neutra"""
-        trajectory = JointTrajectory()
-        trajectory.joint_names = ['head_1_joint', 'head_2_joint']
-        
-        point = JointTrajectoryPoint()
-        point.positions = [0.0, 0.0]  # Posizione neutra
-        point.time_from_start.sec = 1
-        
-        trajectory.points.append(point)
-        
-        self.get_logger().info('Movimento testa: NEUTRAL')
-        self.head_pub.publish(trajectory)
-
-def main(args=None):
-    rclpy.init(args=args)
-    server = HeadMotionServer()
-    
-    try:
-        rclpy.spin(server)
-    except KeyboardInterrupt:
-        server.get_logger().info('Server terminato dall\'utente')
-    
-    rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()
-
-
-12.4 Client Implementation - head_service_client.py:
-
-#!/usr/bin/env python3
-import rclpy
-from rclpy.node import Node
-from example_interfaces.srv import SetBool
-import sys
-
-class HeadMotionClient(Node):
-    def __init__(self):
-        super().__init__('head_motion_client')
-        self.client = self.create_client(
-            SetBool,
-            'play_motion_service'
-        )
-        
-        # Attesa che il servizio sia disponibile
-        while not self.client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service non disponibile, attendo...')
-
-    def send_command(self, move: bool):
-        """Invia comando di movimento della testa"""
-        request = SetBool.Request()
-        request.data = move
-        
-        action = "muovi la testa" if move else "testa neutra"
-        self.get_logger().info(f'Invio comando: {action}')
-        
-        response = self.client.call(request)
-        
-        self.get_logger().info(f'Risposta: {response.message}')
-        return response.success
-
-def main(args=None):
-    rclpy.init(args=args)
-    client = HeadMotionClient()
-    
-    # Esempio: muovi la testa
-    print("\n=== MOVIMENTO TESTA DOWN ===")
-    client.send_command(True)
-    
-    # Attendi un po'
-    import time
-    time.sleep(3)
-    
-    # Riporta allo stato neutro
-    print("\n=== RESTITUISCI TESTA A NEUTRO ===")
-    client.send_command(False)
-    
-    rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()
-
-
-12.5 Comandi per eseguire l'esercitazione:
-
-# Terminale 1: Avvia TIAGO
-ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
-
-# Terminale 2: Avvia il server
-ros2 run move_head_service head_service_server
-
-# Terminale 3: Opzione A - Esegui il client Python
-ros2 run move_head_service head_service_client
-
-# Terminale 3: Opzione B - Usa il comando da terminale direttamente
-ros2 service call /play_motion_service example_interfaces/srv/SetBool "{data: true}"
-
-# Dopo 3 secondi, riporta allo stato neutro
-ros2 service call /play_motion_service example_interfaces/srv/SetBool "{data: false}"
-
-
-12.6 Interfaccia SetBool:
-
-La interfaccia SetBool è una interfaccia standard di ROS 2 (example_interfaces).
-
-Definizione:
----
-bool data
----
-bool success
-string message
----
-
-Uso:
-- Request: SetBool.Request() con request.data (True/False)
-- Response: response.success (successo operazione) + response.message (messaggio descrittivo)
-
-12.7 Struttura del package.xml:
-
-<?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
-<package format="3">
-  <name>move_head_service</name>
-  <version>0.0.0</version>
-  <description>Service per il controllo della testa di TIAGO</description>
-  <maintainer email="user@example.com">Your Name</maintainer>
-  <license>Apache 2.0</license>
-
-  <buildtool_depend>ament_python</buildtool_depend>
-  <depend>rclpy</depend>
-  <depend>example_interfaces</depend>
-  <depend>trajectory_msgs</depend>
-
-  <test_depend>ament_copyright</test_depend>
-  <test_depend>ament_flake8</test_depend>
-  <test_depend>ament_pep257</test_depend>
-  <test_depend>python3-pytest</test_depend>
-
-  <export>
-    <build_type>ament_python</build_type>
-  </export>
-</package>
-
-
-12.8 Messaggi importanti:
-
-a) JointTrajectory (trajectory_msgs/msg/JointTrajectory)
-   - Usato per inviare comandi di movimento agli articoli
-   - Campo: joint_names (lista dei nomi articoli)
-   - Campo: points (lista di JointTrajectoryPoint)
-
-b) JointTrajectoryPoint (trajectory_msgs/msg/JointTrajectoryPoint)
-   - positions: array di posizioni (in radianti)
-   - time_from_start: tempo dal start della traiettoria
-
-Nota: SetBool e gia descritto in dettaglio nella sezione 12.6.
-
-
-12.9 Output atteso:
-Server:
-[INFO] [head_motion_server]: Head Motion Service Server avviato
-[INFO] [head_motion_server]: Comando ricevuto: move=True
-[INFO] [head_motion_server]: Movimento testa: DOWN
-[INFO] [head_motion_server]: Comando ricevuto: move=False
-[INFO] [head_motion_server]: Movimento testa: NEUTRAL
-
-Client:
-=== MOVIMENTO TESTA DOWN ===
-[INFO] [head_motion_client]: Invio comando: muovi la testa
-[INFO] [head_motion_client]: Risposta: Testa mossa verso il basso
-
-=== RESTITUISCI TESTA A NEUTRO ===
-[INFO] [head_motion_client]: Invio comando: testa neutra
-[INFO] [head_motion_client]: Risposta: Testa in posizione neutra
-
-================================================================================
-           FINE GUIDA - ROS 2 SERVICES
-================================================================================

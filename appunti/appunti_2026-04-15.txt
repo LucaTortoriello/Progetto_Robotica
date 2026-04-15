@@ -1,0 +1,91 @@
+Appunti - 2026-04-15 - Luca
+
+Abbiamo analizzato il file Tiago/client_Tiago.py
+
+- Una motion e una sequenza predefinita di movimenti del robot (es. testa, braccio o postura), 
+  richiamabile con un nome per eseguire azioni ripetibili in modo consistente.
+
+1) Obiettivo del file
+- Client ROS2 che lista le motion, verifica se sono pronte e le esegue.
+
+2) Riferimenti principali nel codice
+- File di riferimento: Tiago/client_Tiago.py
+- Nodo: play_motion_client
+- Servizi: /play_motion2/list_motions e /play_motion2/is_motion_ready
+- Import: rclpy, ListMotions, IsMotionReady, subprocess
+
+3) Funzioni
+- list_motions():
+  - richiede la lista motion al servizio.
+- is_motion_ready(motion_name):
+  - controlla se la motion richiesta e pronta.
+- run_motion(motion_name):
+  - esegue ros2 run play_motion2 run_motion <motion_name> e controlla l'esito.
+
+4) Flusso nel main
+- init ROS2
+- crea il client
+- lista motion
+- verifica head_tour
+- esegue head_tour e unfold_arm
+- chiude nodo e ROS2
+
+5) Comandi ROS2 utili
+Prerequisito:
+- source /home/rita/FdR_ISI2026/tiago_public_ws/install/setup.bash
+
+Diagnostica:
+- ros2 service list | grep play_motion2
+
+Chiamate rapide:
+- ros2 service call /play_motion2/list_motions play_motion2_msgs/srv/ListMotions "{}"
+- ros2 service call /play_motion2/is_motion_ready play_motion2_msgs/srv/IsMotionReady "{motion_key: head_tour}"
+- ros2 run play_motion2 run_motion head_tour
+
+6) Note
+- Se i servizi non rispondono, avvia prima TIAGo/play_motion2.
+- In caso di errore, controlla stderr nel logger.
+
+Mini guida: esecuzione con TIAGo
+1) Terminale A (ambiente):
+- source /opt/ros/humble/setup.bash
+- source /home/rita/FdR_ISI2026/tiago_public_ws/install/setup.bash
+
+2) Avvia TIAGo (robot o simulazione) con il launch che usi nel progetto.
+
+3) Terminale B (stesso source), verifica che i servizi siano attivi:
+- ros2 service list | grep play_motion2
+
+4) Test motion diretta:
+- ros2 run play_motion2 run_motion head_tour
+
+5) Esecuzione del client di questo repository:
+- python3 Tiago/client_Tiago.py
+
+Nota:
+- In questo repository non risulta un package Python con entry point per client_Tiago.py, quindi il comando ros2 run <pacchetto> <eseguibile> per questo file non e disponibile finche non viene pacchettizzato.
+
+
+6) Parte del server:
+Dopo aver inizializzato Tiago su Gazebo abbiamo fatto motion di esempio mediante comando ros2 run move_head_service client_Tiago (lo vedi nelo ReadMe Tiago).
+Server e client vanno sempre insieme
+-----------------------------------------------------------------------------------------------
+ACTION
+Utili per rimuovere parte fisica di un robot perchè hanno meccanismo di feedback (controllare cosa sta succedendo) e cancel (funzione x interrompere un certo processo)
+
+- ESERCITAZIONE
+obiettivo: vogliamo che tiago muova la testa lentamente in modo da non perdersi gli aruco
+goal: range min/max per movimento orizzontale testa e step temporale --> comando send_goal (riga 23 ReadMe)
+
+il parametro time_from_start indica quanto tempo ci mette prima di iniziare il movimento
+
+riga26 x creazione package dentro cartella progetto e dentro src
+
+creiamo cartella action dentro my_robot_interfaces --> IMPORTANTE: le action vanno sempre dentro action, mentre i service sempre dentro srv 
+
+Dentro MoveHead.action dobbiamo scrivere il goal, result e feedback
+
+
+dopo aver aggiunto le righe in cmakelist e package.xml abbiamo fatto il colcon build e source nel workspace (con il source l'action viene riconosciuta ovunque)
+
+poi creazione di nuovo package in src 

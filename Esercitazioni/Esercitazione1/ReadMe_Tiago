@@ -1,8 +1,56 @@
-Launch tiago
+Comandi ROS2 utili da Lezione_familiarizzTiago
+
+Avvio simulazione TIAGo
 ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
 
-Pubblicare su topic /head_controller/joint_trajectory
-ros2 topic pub /head_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{joint_names: ['head_1_joint', 'head_2_joint'], points: [{positions: [6.67e-07, -0.86], time_from_start: {sec: 2}}]}"
+Controllo giunti da GUI
+ros2 run rqt_joint_trajectory_controller rqt_joint_trajectory_controller
+
+Topic utili
+ros2 topic list
+
+Informazioni su interfacce e controller
+ros2 interface show trajectory_msgs/msg/JointTrajectory
+ros2 topic info /head_controller/joint_trajectory
+ros2 topic echo /head_controller/state
+ros2 control list_controllers
+ros2 topic echo /joint_states
+ros2 param get /head_controller joints
+
+Visualizzazione camera TIAGo
+ros2 run rqt_image_view rqt_image_view
+
+Muovere testa TIAGo da terminale
+ros2 topic pub /head_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{
+	joint_names: ['head_1_joint', 'head_2_joint'],
+	points: [
+		{
+			positions: [6.67e-07, -0.86],
+			time_from_start: {sec: 2}
+		}
+	]
+}"
+
+Action utili
+ros2 action list
+
+Comandi task 1 (familiarizzazione)
+ros2 control list_controllers
+ros2 topic echo /joint_states
+ros2 param get /head_controller joints
+ros2 run joint_state_publisher_gui joint_state_publisher_gui
+ros2 run rqt_image_view rqt_image_view
+
+Spostare la testa (variante task 1)
+ros2 topic pub /head_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{
+	joint_names: ['head_1_joint', 'head_2_joint'],
+	points: [
+		{
+			positions: [-2.17e-05, -0.57],
+			time_from_start: {sec: 2}
+		}
+	]
+}"
 
 
 

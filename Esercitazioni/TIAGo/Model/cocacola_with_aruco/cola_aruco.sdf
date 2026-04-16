@@ -1,0 +1,94 @@
+<?xml version="1.0" ?>
+<sdf version="1.4">
+  <model name="cocacola_with_aruco">
+    <pose>0 0 0 0 0 0</pose>
+    
+    <!-- Lattina CocaCola -->
+    <model name="cocacola">
+      <pose>0 0 0 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.25</mass>
+          <inertia>
+            <ixx>0.000000</ixx>
+            <ixy>0.000000</ixy>
+            <ixz>0.000000</ixz>
+            <iyy>0.000000</iyy>
+            <iyz>0.000000</iyz>
+            <izz>0.000000</izz>
+          </inertia>
+        </inertial>
+        <collision name="collision">
+          <pose>0 0 0.075 3.1416 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.04</radius>
+              <length>0.15</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <pose>0 0 0.075 3.1416 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.04</radius>
+              <length>0.15</length>
+            </cylinder>
+          </geometry>
+          <material>
+  	    <script>
+    	      <uri>model://cocacola_with_aruco/material/scripts</uri>
+              <uri>model://cocacola_with_aruco/material/textures</uri>
+              <name>Custom/cocacola</name>
+            </script>
+          </material>
+        </visual>
+      </link>
+    </model>
+    
+    <!-- Aruco Marker posizionato sopra la lattina -->
+    <model name="aruco_marker_6cm_26">
+      <pose>0 0 0.15 0 0 0</pose> <!-- Posizionato sopra la lattina -->
+      <link name="marker">
+        <inertial>
+          <mass>0.1</mass>
+          <inertia>
+            <ixx>0.000000</ixx>
+            <ixy>0.000000</ixy>
+            <ixz>0.000000</ixz>
+            <iyy>0.000000</iyy>
+            <iyz>0.000000</iyz>
+            <izz>0.000000</izz>
+          </inertia>
+        </inertial>
+        <visual name="visual">
+          <pose>0 0 0 0 0 1.57</pose>
+          <geometry>
+            <box>
+              <size>0.06 0.06 0.001</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://cocacola_with_aruco/material/scripts</uri>
+              <uri>model://cocacola_with_aruco/material/textures</uri>
+              <name>Aruco/aruco_marker_6cm_26</name>
+            </script>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.06 0.06 0.001</size>
+            </box>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <joint name="aruco_fixed_joint" type="fixed">
+      <parent>cocacola::link</parent>
+      <child>aruco_marker_6cm_26::marker</child>
+    </joint>
+  </model>
+</sdf>
+

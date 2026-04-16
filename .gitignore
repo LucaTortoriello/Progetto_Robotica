@@ -1,5 +1,4 @@
-# Ignora la cartella esercitazioni
-esercitazioni/
+# La cartella Esercitazioni ora deve essere versionata
 
 # Ignora file di sistema
 .DS_Store

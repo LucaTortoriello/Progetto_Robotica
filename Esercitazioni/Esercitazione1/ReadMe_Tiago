@@ -1,0 +1,8 @@
+Launch tiago
+ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
+
+Pubblicare su topic /head_controller/joint_trajectory
+ros2 topic pub /head_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{joint_names: ['head_1_joint', 'head_2_joint'], points: [{positions: [6.67e-07, -0.86], time_from_start: {sec: 2}}]}"
+
+
+

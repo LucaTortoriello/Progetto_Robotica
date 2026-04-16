@@ -1,0 +1,43 @@
+TOPIC
+Launch tiago:
+ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
+
+Pubblicare su topic /head_controller/joint_trajectory:
+ros2 topic pub /head_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{joint_names: ['head_1_joint', 'head_2_joint'], points: [{positions: [6.67e-07, -0.86], time_from_start: {sec: 2}}]}"
+
+SERVICE
+Creazione pkg:
+ros2 pkg create move_head_service --build-type ament_python --dependencies rclpy
+
+Comando da inviare dopo aver lanciato il server:
+ros2 service call /play_motion_service example_interfaces/srv/SetBool "{data: true}"
+
+Comando da inviare per chiamare il servizio /play_motion2/list_motions
+ros2 service call /play_motion2/list_motions play_motion2_msgs/srv/ListMotions
+
+Comando per eseguire unfold_arm da terminale
+ros2 run play_motion2 run_motion unfold_arm
+
+ACTION 
+Pubblicare su action /head_controller/follow_joint_trajectory
+ros2 action send_goal /head_controller/follow_joint_trajectory control_msgs/action/FollowJointTrajectory "{trajectory: {joint_names: ['head_1_joint', 'head_2_joint'], points: [{positions: [6.67e-07, -0.86], time_from_start: {sec: 2}}]}}"
+
+Creazione pkg: 
+ros2 pkg create my_robot_interfaces --build-type ament_python 
+ros2 pkg create move_head_action --build-type ament_python --dependencies rclpy
+
+Da aggiungere a CMakeLists.txt
+  find_package(rosidl_default_generators REQUIRED)
+
+  rosidl_generate_interfaces(${PROJECT_NAME}
+    "action/MoveHead.action"
+  )
+  
+Da aggiungere a package.xml:
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group> 
+
+ros2 action send_goal /move_head my_robot_interfaces/action/MoveHead "{min: -0.217, max: 0.217, step: 0.05}"
+

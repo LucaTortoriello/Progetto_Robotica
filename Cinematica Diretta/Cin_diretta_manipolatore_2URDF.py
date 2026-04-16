@@ -36,7 +36,7 @@ def dh_to_transformation_matrix(d, theta, a, alpha):
         [0, 0, 0, 1]
     ])
     
-    return T
+    return T   # Restituisce la matrice di trasformazione omogenea 4x4 che rappresenta la trasformazione da un frame giunto al successivo (non rispetto alla base, ma rispetto a due link consecutivi), basata sui parametri DH forniti.
 
 def rotation_matrix_to_rpy(R_mat):
     """Converte la matrice di rotazione 3x3 in angoli roll-pith-yaw (utili per URDF standard)
@@ -62,10 +62,10 @@ def transformation_matrix_to_urdf(T):
     Returns:
     tuple: ((x, y, z), (roll, pitch, yaw))
     """
-    # Extract translation (xyz)
+    # Extract translation (xyz). Prende la posizione x,y e z dall'ultima colonna di trasformazione
     xyz = (T[0, 3], T[1, 3], T[2, 3])
     
-    # Extract rotation matrix
+    # Extract rotation matrix (estraggo matrice di rotazione 3x3 da quella di trasformazione 4x4)
     R = T[0:3, 0:3]
     
     # Convert rotation matrix to rpy
@@ -160,7 +160,7 @@ def animate_robot_3d(dh_params_base, joint_angle_ranges, n_frames=50):
         
         # Calcola la trasformazione cumulativa per ogni giunto: aggiorna la posizione finale del giunto.
         for d, theta, a, alpha in dh_current:
-            T_next = dh_to_transformation_matrix(d, theta, a, alpha)
+            T_next = dh_to_transformation_matrix(d, theta, a, alpha) #trasformazione omogenea per il giunto corrente e successivo           
             T_current = T_current @ T_next
             positions.append(T_current[:3, 3])
             
@@ -215,7 +215,7 @@ def main():
     # Initialize the current transformation matrix
     T_current = np.eye(4)
     
-    for i, dh in enumerate(dh_params):
+    for i, dh in enumerate(dh_params): # Itera sui parametri DH di ogni giunto
         d, theta, a, alpha = dh
         
         # Calculate the transformation from this frame to the next
@@ -234,7 +234,7 @@ def main():
     print(f"\nCumulative Transformation from Base to End-Effector:\n{T_current}") 
         
     plot_manipulator(dh_params)
-    joint_angle_ranges = [(0, np.pi/2) for _ in dh_params]
+    # joint_angle_ranges = [(0, np.pi/2) for _ in dh_params]
     joint_angle_ranges = np.array([
     [-150 * (np.pi / 180), 114 * (np.pi / 180)],
     [-67 * (np.pi / 180), 109 * (np.pi / 180)],
@@ -243,7 +243,7 @@ def main():
     [-150 * (np.pi / 180), 150 * (np.pi / 180)],
     [-92 * (np.pi / 180), 113 * (np.pi / 180)],
     [-150 * (np.pi / 180), 150 * (np.pi / 180)]
-]) # limiti di giunto
+]) # limiti di giunto definiti nella tabella nel pdf
 
     animate_robot_3d(dh_params, joint_angle_ranges, n_frames=100)
 

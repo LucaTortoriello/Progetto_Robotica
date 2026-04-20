@@ -13,8 +13,8 @@ class DetectionTask1Node(Node):
         super().__init__('detection_task_1')
 
         # Riferimento blocco ES4:
-        # Esercitazioni/Esercitazione4-Action/codes/action_server.py (__init__)
-        # Client verso il controller testa TIAGo.
+        # - Esercitazioni/Esercitazione4-Action/codes/action_server.py lines 27-31
+        # Client verso il controller testa TIAGo, usando FollowJointTrajectory.
         self.head_client = ActionClient(
             self,
             FollowJointTrajectory,
@@ -22,8 +22,8 @@ class DetectionTask1Node(Node):
         )
 
         # Riferimento blocco ES4:
-        # Esercitazioni/Esercitazione4-Action/codes/action_server.py (__init__)
-        # Nomi giunti testa uguali all'esercitazione.
+        # - Esercitazioni/Esercitazione4-Action/codes/action_server.py lines 33
+        # Nomi giunti testa
         self.joint_names = ['head_1_joint', 'head_2_joint']
 
         # Parametri del nodo (scansione ambiente con movimento testa).
@@ -60,7 +60,8 @@ class DetectionTask1Node(Node):
             return
 
         # Riferimento blocco ES4:
-        # Esercitazioni/Esercitazione4-Action/codes/action_server.py (move_head)
+        # - Esercitazioni/Esercitazione4-Action/codes/action_server.py lines 39-46
+        # - action/codes/action_server.py lines 38-46
         # Verifica disponibilita action server prima dell'invio goal.
         if not self.head_client.wait_for_server(timeout_sec=0.2):
             if not self.warned_head_server_unavailable:
@@ -82,7 +83,8 @@ class DetectionTask1Node(Node):
 
     def _send_head_goal(self, pan, tilt):
         # Riferimento blocco ES4:
-        # Esercitazioni/Esercitazione4-Action/codes/action_server.py (move_head)
+        # - Esercitazioni/Esercitazione4-Action/codes/action_server.py lines 39-56
+        # - action/codes/action_server.py lines 38-52
         # Costruzione trajectory con JointTrajectory + JointTrajectoryPoint.
         traj = JointTrajectory()
         traj.joint_names = self.joint_names
@@ -97,7 +99,8 @@ class DetectionTask1Node(Node):
         traj.points.append(point)
 
         # Riferimento blocco ES4:
-        # Esercitazioni/Esercitazione4-Action/codes/action_server.py (move_head)
+        # - Esercitazioni/Esercitazione4-Action/codes/action_server.py lines 52-56
+        # - action/codes/action_server.py lines 52-56
         # Goal FollowJointTrajectory inviato al controller della testa.
         goal_msg = FollowJointTrajectory.Goal()
         goal_msg.trajectory = traj

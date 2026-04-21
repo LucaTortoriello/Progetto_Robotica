@@ -103,20 +103,33 @@ class HeadActionServer(Node):
             scan_positions.append(current)
             current -= step
 
+        # Durante tutta la scansione segnalo moving=True.
+        feedback.moving = True
+
         for position in scan_positions:
             # Movimento testa
             if not self.move_head(position):
                 self.get_logger().warn("Movimento testa fallito durante la scansione.")
+                feedback.current_position = position
+                feedback.moving = False
+                goal_handle.publish_feedback(feedback)
                 goal_handle.abort()
                 result.success = False
+                result.message = "Movimento testa fallito durante la scansione."
                 return result
 
             # Feedback reale: pubblico la posizione raggiunta durante la scansione.
             feedback.current_position = position
+            feedback.moving = True
             goal_handle.publish_feedback(feedback)
+
+        # A scansione terminata segnalo moving=False.
+        feedback.moving = False
+        goal_handle.publish_feedback(feedback)
 
         goal_handle.succeed()
         result.success = True
+        result.message = "Scansione testa completata con successo."
 
         return result
 

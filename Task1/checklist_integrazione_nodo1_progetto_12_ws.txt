@@ -26,12 +26,10 @@ NOTA: det_task1.py usa una Action custom MoveHead, quindi servono 2 package:
 1) Crea package interfacce (se non esiste gia):
 ros2 pkg create my_robot_interfaces --build-type ament_cmake
 
-in tal caso vedi se esiste
+esiste già: verificato il 21 aprile
 
 2) Crea package Python per il nodo (se non esiste gia):
 ros2 pkg create task1_pkg --build-type ament_python --dependencies rclpy control_msgs trajectory_msgs my_robot_interfaces
-
-verificare se dopo rclpy serve inserire testo
 
 =====================================================================
 FASE 2 - CONFIGURAZIONE ACTION MoveHead
@@ -107,6 +105,23 @@ colcon build --symlink-install --packages-select my_robot_interfaces task1_pkg f
 
 2) Source workspace: 
 source ~/progetto_12_ws/install/setup.bash
+
+3) Se modifichi det_task1.py, ripeti questi passaggi prima del test:
+- interrompi il nodo vecchio con CTRL+C nel Terminale C
+- cd ~/progetto_12_ws
+- source /opt/ros/humble/setup.bash
+- colcon build --symlink-install --packages-select task1_pkg
+- source ~/progetto_12_ws/install/setup.bash
+- ros2 run task1_pkg det_task1
+
+4) Non usare source ~/.bashrc per questo test:
+- può caricare altri workspace e creare conflitti
+- usa solo:
+  - source /opt/ros/humble/setup.bash
+  - source ~/progetto_12_ws/install/setup.bash
+
+5) Verifica che il workspace corretto sia attivo:
+ros2 pkg prefix task1_pkg
 
 =====================================================================
 FASE 5 - RUN (GAZEBO + NODO 1)

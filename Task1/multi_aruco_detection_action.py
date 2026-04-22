@@ -48,8 +48,10 @@ class MultiArucoDetector(Node):
             self.get_parameter('pose_log_period_sec').value
         )
 
+        # Il frame base è quello del robot, che in questo caso è 'base_footprint'
         self.base_frame = 'base_footprint'
-        self.camera_frame = 'head_front_camera_color_optical_frame'
+        # Il frame della camera è quello del topic camera_info, che in questo caso è 'head_front_camera_color_optical_frame'
+        self.camera_frame = 'head_front_camera_color_optical_frame' 
 
         self.bridge = CvBridge()
         self.camera_matrix = None
@@ -68,26 +70,26 @@ class MultiArucoDetector(Node):
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.marker_tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
-        self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
+        self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250) #come richiesto nel punto 3.4
         self.params = cv2.aruco.DetectorParameters_create()
 
         self.head_client = ActionClient(
             self,
             FollowJointTrajectory,
-            '/head_controller/follow_joint_trajectory',
+            '/head_controller/follow_joint_trajectory', #action client su follow_joint_trajectory del controller della testa
         )
-        self.joint_names = ['head_1_joint', 'head_2_joint']
+        self.joint_names = ['head_1_joint', 'head_2_joint'] #giunti come da traccia
         self.scan_index = 0
         self.head_goal_in_progress = False
         self.warned_head_server_unavailable = False
 
         self.visible_ids_pub = self.create_publisher(
-            Int32MultiArray,
+            Int32MultiArray, #ID visibili in questo momento 
             '/aruco_visible_ids',
             10,
         )
         self.detected_ids_pub = self.create_publisher(
-            Int32MultiArray,
+            Int32MultiArray, #ID visti da inizio esecuzione
             '/aruco_detected_ids',
             10,
         )
@@ -270,7 +272,7 @@ class MultiArucoDetector(Node):
 
     def _ensure_publishers(self, marker_id):
         if marker_id not in self.camera_publishers:
-            topic_cam = f'/aruco_camera_{marker_id}'
+            topic_cam = f'/aruco_camera_{marker_id}' #topic per pose in camera frame, come da traccia
             self.camera_publishers[marker_id] = self.create_publisher(
                 PoseStamped,
                 topic_cam,
@@ -278,7 +280,7 @@ class MultiArucoDetector(Node):
             )
 
         if marker_id not in self.base_publishers:
-            topic_base = f'/aruco_base_{marker_id}'
+            topic_base = f'/aruco_base_{marker_id}' #topic per pose in base frame, come da traccia
             self.base_publishers[marker_id] = self.create_publisher(
                 PoseStamped,
                 topic_base,

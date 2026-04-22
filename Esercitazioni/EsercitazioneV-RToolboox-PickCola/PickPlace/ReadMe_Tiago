@@ -1,0 +1,24 @@
+Creazione pkg:
+ros2 pkg create pick_place --build-type ament_python --dependencies rclpy
+
+SERVICE ATTACH nel .bashrc
+export GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:/home/rita/gazebo_ros_link_attacher_ws/install/gazebo_ros_link_attacher/lib
+
+PICK PLACE
+Simulazione:
+ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
+
+Eseguibile che detecta tutti gli ArUco:
+ros2 run aruco_pkg aruco_detection
+
+Movimento testa:
+ros2 run aruco_pkg action_client 
+ros2 run aruco_pkg action_server
+
+Movimento braccio:
+ros2 run play_motion2 run_motion unfold_arm
+
+Pick coca cola:
+ros2 run pick_place_coca pick_place_cola 
+
+

@@ -1,279 +1,101 @@
-CHECKLIST LAUNCH FILE - TASK 1 SETUP E TEST LABORATORIO
+CHECKLIST LAUNCH FILE - TASK 1 (REVISIONATA)
 
-PREREQUISITI
-============
-□ Verificare che il workspace ROS2 sia disponibile (~/progetto_n_ws/)
-□ Verificare che i due nodi (det_task1.py e aruco_detector_all_markers.py) siano già stati creati
-□ Verificare che Gazebo sia installato e funzionante
-□ Avere il file launch_task1.py pronto nel Task1 directory
+OBIETTIVO
+=========
+Avviare in un solo comando:
+1) simulazione TIAGo in Gazebo,
+2) nodo action server scansione testa (`det_task1`),
+3) nodo detector ArUco (`aruco_detector_all_markers`).
 
 
-STEP 1 - COPIA DEL LAUNCH FILE NEL POSIZIONAMENTO CORRETTO
-===========================================================
-□ Aprire il file manager o terminale
-□ Il file launch_task1.py deve essere nel percorso:
-  ~/progetto_n_ws/src/progetto_robotica/launch/launch_task1.py
-  
-□ Se non esiste la cartella launch, crearla:
+PERCORSI SORGENTE -> DESTINAZIONE (DA VERIFICARE)
+==================================================
+Sorgenti locali (questa repo):
+- /home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/Launch/launch_task1.py
+- /home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/nodi/det_task1.py
+- /home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/nodi/aruco_detector_all_markers.py
+
+Destinazioni nel workspace ROS2 (esempio: ~/progetto_n_ws):
+- ~/progetto_n_ws/src/progetto_robotica/launch/launch_task1.py
+- ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/det_task1.py
+- ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/aruco_detector_all_markers.py
+
+
+STEP 1 - POSIZIONAMENTO FILE
+============================
+□ Verificare che esista la cartella launch del package:
   mkdir -p ~/progetto_n_ws/src/progetto_robotica/launch
 
-□ Copiare il file launch_task1.py nella cartella launch:
-  cp ~/progetto_n_ws/Task1/Launch/launch_task1.py ~/progetto_n_ws/src/progetto_robotica/launch/
+□ Copiare il launch:
+  cp "/home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/Launch/launch_task1.py" \
+     ~/progetto_n_ws/src/progetto_robotica/launch/
 
-□ Verificare che il file sia stato copiato correttamente:
-  ls -la ~/progetto_n_ws/src/progetto_robotica/launch/launch_task1.py
+□ Copiare/aggiornare i nodi Python nel modulo package:
+  cp "/home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/nodi/det_task1.py" \
+     ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/
 
-
-STEP 2 - AGGIORNAMENTO DEL FILE setup.py
-==========================================
-□ Aprire il file setup.py del pacchetto progetto_robotica:
-  cat ~/progetto_n_ws/src/progetto_robotica/setup.py
-
-□ Verificare che nella sezione 'entry_points' siano presenti:
-  'det_task1 = progetto_robotica.det_task1:main'
-  'aruco_detector_all_markers = progetto_robotica.aruco_detector_all_markers:main'
-
-□ Se MANCANO, modificare il file setup.py aggiungendo gli entry point:
-  - Aprire il file in un editor
-  - Localizzare la sezione 'console_scripts' in entry_points
-  - Aggiungere le due righe se non presenti
-  - Salvare il file
-
-□ VERIFICARE CHE IL setup.py CONTENGA ANCHE:
-  from setuptools import setup, find_packages
-  
-  setup(
-      name='progetto_robotica',
-      version='0.0.0',
-      packages=find_packages(exclude=['test']),
-      ...
-      entry_points={
-          'console_scripts': [
-              'det_task1 = progetto_robotica.det_task1:main',
-              'aruco_detector_all_markers = progetto_robotica.aruco_detector_all_markers:main',
-          ],
-      },
-  )
+  cp "/home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/nodi/aruco_detector_all_markers.py" \
+     ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/
 
 
-STEP 3 - COMPILAZIONE DEL WORKSPACE
-====================================
-□ Aprire un terminale
-□ Navigare nel workspace:
-  cd ~/progetto_n_ws/
-
-□ Compilare il workspace:
-  colcon build
-
-□ Se la compilazione fallisce, verificare i messaggi di errore e correggerli
-□ Attendere che la compilazione sia completata (potrebbe durare alcuni minuti)
-
-□ Verificare che la compilazione sia riuscita:
-  ls -la ~/progetto_n_ws/install/progetto_robotica/
-
-□ Se tutto è OK, dovrebbe elencare una serie di cartelle (bin, lib, share, ecc.)
+STEP 2 - setup.py (ENTRY POINT)
+===============================
+□ In ~/progetto_n_ws/src/progetto_robotica/setup.py verificare `console_scripts`:
+  - 'det_task1 = progetto_robotica.det_task1:main'
+  - 'aruco_detector_all_markers = progetto_robotica.aruco_detector_all_markers:main'
 
 
-STEP 4 - CARICAMENTO DELLE VARIABILI DI AMBIENTE
-================================================
-□ Nel terminale dove compilerai il launch file, eseguire source:
-  source ~/.bashrc
+STEP 3 - BUILD E SOURCE CORRETTI
+================================
+□ Compilare:
+  cd ~/progetto_n_ws
+  source /opt/ros/humble/setup.bash
+  colcon build --symlink-install
 
-□ Verificare che le variabili ROS2 siano caricate:
-  echo $ROS_DOMAIN_ID
-  echo $GAZEBO_MODEL_PATH
+□ Sorgentare overlay:
+  source ~/progetto_n_ws/install/setup.bash
 
 
-STEP 5 - AVVIO DEL LAUNCH FILE
-==============================
-□ Nel terminale (dopo aver fatto source), lanciare il file launch_task1.py:
+STEP 4 - AVVIO LAUNCH UNICO
+===========================
+□ Avvio:
   ros2 launch progetto_robotica launch_task1.py
 
-□ Attendere l'avvio di tutti i componenti (può durare 10-20 secondi):
-  - Gazebo inizializza
-  - Il robot TIAGo viene caricato nella scena
-  - L'action server inizia e stampa: "[INFO] Action server started, waiting for goals..."
-  - Il detector ArUco si avvia e apre la finestra OpenCV
-
-□ Nel terminale dovrebbero comparire i log di TUTTI e tre i nodi:
-  [tiago_gazebo.launch.py]
-  [action_server_head_scan]
-  [aruco_detector]
+□ Atteso:
+  - Gazebo/TIAGo parte correttamente
+  - nodo `action_server_head_scan` attivo
+  - nodo `aruco_detector` attivo
 
 
-STEP 6 - VERIFICA VISUALI
-=========================
-□ Gazebo deve essere aperto e mostrare il robot TIAGo nella scena
-□ Una finestra OpenCV deve essere aperta (mostra il feed della camera del robot)
-□ Nel terminale non devono esserci errori critici
-
-
-STEP 7 - TEST DEI NODI IN PARALLELO
-====================================
-□ Aprire un SECONDO terminale (mantenendo il primo con il launch file attivo)
-□ Nel secondo terminale, eseguire source:
-  source ~/.bashrc
-
-□ Verificare che i nodi siano attivi:
+STEP 5 - TEST RAPIDI
+====================
+□ Nodi attivi:
   ros2 node list
 
-□ Dovrebbe elencare:
-  /action_server_head_scan
-  /aruco_detector
-  /gazebo
-  /gazebo_client
-  (e altri nodi di TIAGo)
-
-□ Se mancano i nodi, verificare nel terminale del launch file se ci sono errori
-
-
-STEP 8 - INVIO DEL GOAL PER LA SCANSIONE
-=========================================
-□ Nel SECONDO terminale, inviare il goal per la scansione della testa:
+□ Goal scansione:
   ros2 action send_goal /move_head my_robot_interfaces/action/MoveHead "{min: -0.217, max: 0.217, step: 0.05}"
 
-□ Osservare in Gazebo: il robot dovrebbe muovere la testa
-□ Nel terminale con il launch file dovrebbero apparire i log della scansione
-□ Nel terminale del secondo: mostra il progresso dell'azione
-
-
-STEP 9 - VERIFICA DEI TOPIC ARUCO
-==================================
-□ Durante o dopo la scansione, nel SECONDO terminale verificare i topic:
+□ Topic ArUco:
   ros2 topic list | grep aruco
 
-□ Dovrebbero apparire topic come:
-  /aruco_camera_1
-  /aruco_base_1
-  /aruco_camera_2
-  /aruco_base_2
-  (i numeri dipendono dai marker presenti nella scena)
 
-
-STEP 10 - VISUALIZZAZIONE DELLE POSE
-=====================================
-□ Nel SECONDO terminale, visualizzare una posa nel frame camera:
-  ros2 topic echo /aruco_camera_1
-
-□ Verificare che vengano stampati messaggi PoseStamped con:
-  - frame_id: 'head_front_camera_color_optical_frame'
-  - position e orientation valide
-
-□ Premere Ctrl+C
-
-□ Nel SECONDO terminale, visualizzare una posa nel frame base:
-  ros2 topic echo /aruco_base_1
-
-□ Verificare che le coordinate siano DIVERSE da /aruco_camera_1
-  (perché espresse in un frame diverso)
-
-□ Premere Ctrl+C
-
-
-STEP 11 - MONITORAGGIO DELLA FREQUENZA
-=======================================
-□ Nel SECONDO terminale, verificare la frequenza di pubblicazione:
-  ros2 topic hz /aruco_base_1
-
-□ Dovrebbe mostrare una frequenza costante (circa 10 Hz dal timer di republish)
-□ Premere Ctrl+C
-
-
-STEP 12 - VERIFICA DEL SISTEMA TF
-==================================
-□ Nel SECONDO terminale (facoltativo), verificare l'albero delle trasformazioni:
-  ros2 run tf2_tools view_frames.py
-
-□ Dovrebbe creare un file /tmp/frames.pdf
-□ Aprire il file: evince /tmp/frames.pdf
-
-□ Verificare che il frame 'head_front_camera_color_optical_frame' sia collegato a 'base_footprint'
-
-
-STEP 13 - ESECUZIONE DI UN CICLO COMPLETO DI TEST
-=================================================
-□ Nel SECONDO terminale, eseguire una nuova scansione:
-  ros2 action send_goal /move_head my_robot_interfaces/action/MoveHead "{min: -0.217, max: 0.217, step: 0.05}"
-
-□ Osservare in Gazebo il movimento del robot
-□ Osservare nella finestra OpenCV i marker rilevati
-□ Verificare che i topic /aruco_camera_* e /aruco_base_* vengono aggiornati
-
-□ Inviare un SECONDO goal per verificare che il sistema è stabile:
-  ros2 action send_goal /move_head my_robot_interfaces/action/MoveHead "{min: -0.217, max: 0.217, step: 0.03}"
-
-□ Verificare che tutto funzioni correttamente
-
-
-STEP 14 - ARRESTO DEL SISTEMA
-=============================
-□ Nel PRIMO terminale (dove è in esecuzione il launch file), premere Ctrl+C
-
-□ Attendere che tutti i nodi vengano fermati correttamente
-□ Gazebo deve chiudersi
-□ La finestra OpenCV deve chiudersi
-□ Nel terminale non devono comparire errori di shutdown
-
-□ Verificare che i nodi siano stati fermati:
-  ros2 node list
-  
-□ Dovrebbe ritornare un errore: "Could not contact ROS master"
-  (questo è normale, indica che il sistema ROS2 è stato spento)
-
-
-CHECKLIST DI VERIFICA FINALE
-=============================
-✓ Il launch file è nel percorso corretto: ~/progetto_n_ws/src/progetto_robotica/launch/launch_task1.py
-✓ Il setup.py contiene i due entry point (det_task1 e aruco_detector_all_markers)
-✓ Il workspace è stato compilato senza errori: colcon build
-✓ Il launch file avvia tutti e tre i componenti (Gazebo, action server, detector)
-✓ I nodi sono visibili con: ros2 node list
-✓ I topic ArUco vengono creati dinamicamente durante la scansione
-✓ Le pose in camera frame e base frame sono diverse
-✓ La frequenza di pubblicazione è costante
-✓ Il robot esegue la scansione della testa
-✓ L'arresto del sistema avviene senza errori
-
-
-TROUBLESHOOTING COMUNI
+TROUBLESHOOTING MIRATO
 ======================
-1. ERRORE: "Package 'progetto_robotica' not found"
-   SOLUZIONE: Verificare che colcon build sia stato eseguito
-              Verificare che il workspace sia stato sourcato: source ~/.bashrc
+1) Package TIAGo non trovato nel launch:
+   - verificare che sia installato un pacchetto tra `tiago_gazebo` o `tiago_gazebo_simulation`
+   - rifare source dell'ambiente
 
-2. ERRORE: "Could not find executable 'det_task1'"
-   SOLUZIONE: Verificare gli entry point in setup.py
-              Ricompilare: colcon build
-              Fare source: source ~/.bashrc
+2) `Could not find executable 'det_task1'`:
+   - entry point mancanti in setup.py
+   - rebuild e source mancanti
 
-3. I nodi si avviano ma non funzionano correttamente
-   SOLUZIONE: Controllare i log nel terminale del launch file
-              Verificare che i topic siano pubblicati: ros2 topic list
-              Verificare la trasformazione TF: ros2 run tf2_tools view_frames.py
-
-4. Gazebo non si apre
-   SOLUZIONE: Verificare che Gazebo sia installato: gazebo --version
-              Controllare il comando is_public_sim nel launch file
-              Verificare GAZEBO_MODEL_PATH: echo $GAZEBO_MODEL_PATH
-
-5. La finestra OpenCV non appare
-   SOLUZIONE: Verificare che il detector ArUco sia in esecuzione: ros2 node list
-              Verificare che i marker siano presenti nella scena Gazebo
-              Controllare gli errori nel terminale del launch file
+3) Nessun topic `/aruco_*`:
+   - marker non visibili in camera
+   - detector non in esecuzione o errori OpenCV/TF
 
 
-NOTE IMPORTANTI
-===============
-- Il launch file deve essere salvato nella cartella: progetto_robotica/launch/
-- Il nome del file deve essere esattamente: launch_task1.py
-- Usare il comando: ros2 launch progetto_robotica launch_task1.py
-  (non: ros2 launch launch_task1.py)
-
-- Tutti e tre i componenti partono contemporaneamente
-- I log vengono visualizzati nello stesso terminale (prefissi diversi per ogni nodo)
-- Per fermare tutto: Ctrl+C nel terminale del launch file
-
-- Per testare i singoli nodi separatamente, usare ancora:
-  Terminal 1: ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
-  Terminal 2: ros2 run progetto_robotica det_task1
-  Terminal 3: ros2 run progetto_robotica aruco_detector_all_markers
+NOTE FINALI
+===========
+- Il comando corretto è: `ros2 launch progetto_robotica launch_task1.py`
+- Evitare dipendenza da `source ~/.bashrc` per i test: usare source esplicito ROS + workspace.
+- In ROS2 non aspettarsi messaggi di tipo "ROS master" (tipici ROS1).

@@ -34,6 +34,27 @@ ros2 topic pub /head_controller/joint_trajectory trajectory_msgs/msg/JointTrajec
 Action utili
 ros2 action list
 
+def _resolve_tiago_gazebo_launch_path():
+    """Trova il launch file di TIAGo provando i nomi pacchetto più comuni."""
+    candidate_packages = [
+        'tiago_gazebo',
+        'tiago_gazebo_simulation',
+    ]
+
+    for pkg_name in candidate_packages:
+        try:
+            pkg_share = get_package_share_directory(pkg_name)
+            launch_path = os.path.join(pkg_share, 'launch', 'tiago_gazebo.launch.py')
+            if os.path.exists(launch_path):
+                return launch_path
+        except PackageNotFoundError:
+            continue
+
+    raise RuntimeError(
+        "Impossibile trovare 'tiago_gazebo.launch.py'. "
+        "Installare/sorgentare il pacchetto TIAGo (tiago_gazebo o tiago_gazebo_simulation)."
+    )
+
 Comandi task 1 (familiarizzazione)
 ros2 control list_controllers
 ros2 topic echo /joint_states

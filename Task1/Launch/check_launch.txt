@@ -13,7 +13,7 @@ PERCORSI SORGENTE -> DESTINAZIONE (DA VERIFICARE)
 
 
 Destinazioni nel workspace ROS2 (workspace reale: ~/progetto_12_ws):
-- ~/progetto_12_ws/src/task1_pkg/launch/launch_task1.py
+- ~/progetto_12_ws/src/my_bringup/launch/launch_task1.py
 - ~/progetto_12_ws/src/task1_pkg/task1_pkg/det_task1.py
 - ~/progetto_12_ws/src/task1_pkg/task1_pkg/aruco_detector_all_markers.py
 
@@ -21,11 +21,11 @@ Destinazioni nel workspace ROS2 (workspace reale: ~/progetto_12_ws):
 STEP 1 - POSIZIONAMENTO FILE
 ============================
 □ Verificare che esista la cartella launch del package:
-  mkdir -p ~/progetto_12_ws/src/task1_pkg/launch
+  mkdir -p ~/progetto_12_ws/src/my_bringup/launch
 
 □ Copiare il launch:
   cp "/home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/Launch/launch_task1.py" \
-  ~/progetto_12_ws/src/task1_pkg/launch/
+  ~/progetto_12_ws/src/my_bringup/launch/
 
 □ Copiare/aggiornare i nodi Python nel modulo package:
   cp "/home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/nodi/det_task1.py" \
@@ -59,7 +59,7 @@ STEP 4 - AVVIO LAUNCH UNICO
   ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
 
 □ Avvio:
-  ros2 launch task1_pkg launch_task1.py
+  ros2 launch my_bringup launch_task1.py
 
 □ Atteso:
   - nodo `action_server_head_scan` attivo
@@ -96,6 +96,6 @@ TROUBLESHOOTING MIRATO
 
 NOTE FINALI
 ===========
-- Il comando corretto è: `ros2 launch task1_pkg launch_task1.py`
+- Il comando corretto è: `ros2 launch my_bringup launch_task1.py`
 - Evitare dipendenza da `source ~/.bashrc` per i test: usare source esplicito ROS + workspace.
 - In ROS2 non aspettarsi messaggi di tipo "ROS master" (tipici ROS1).

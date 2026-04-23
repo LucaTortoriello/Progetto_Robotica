@@ -7,6 +7,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'det_node_name',
+            emulate_tty=True,
             default_value='action_server_head_scan'
         ),
         DeclareLaunchArgument(
@@ -14,6 +15,7 @@ def generate_launch_description():
             default_value='aruco_detector'
         ),
         Node(
+            emulate_tty=True,
             package='task1_pkg',
             executable='det_task1',
             name=LaunchConfiguration('det_node_name'),

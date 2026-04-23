@@ -68,7 +68,7 @@ Sorgenti (repo corrente):
 - /home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/nodi/aruco_detector_all_markers.py
 
 Destinazioni nel workspace ROS2 (esempio):
-- ~/progetto_12_ws/src/task1_pkg/launch/launch_task1.py
+- ~/progetto_12_ws/src/my_bringup/launch/launch_task1.py
 - ~/progetto_12_ws/src/task1_pkg/task1_pkg/det_task1.py
 - ~/progetto_12_ws/src/task1_pkg/task1_pkg/aruco_detector_all_markers.py
 
@@ -79,7 +79,7 @@ Comando Gazebo (terminale separato):
 - ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
 
 Comando da usare:
-- ros2 launch task1_pkg launch_task1.py
+- ros2 launch my_bringup launch_task1.py
 
 Prerequisiti minimi:
 - build del workspace (`colcon build --symlink-install`)

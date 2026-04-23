@@ -48,6 +48,8 @@ class ArucoDetector(Node):
         self.last_poses_camera = {}  # {marker_id: pose_camera}
         self.last_poses_base = {}    # {marker_id: pose_base}
         self.last_detected_ids = []  # Lista degli ID rilevati nell'ultimo frame
+        self.last_logged_ids = []
+        self.last_detection_log_stamp = None
 
         # Publisher dinamici (UNO per ID)
         self.camera_publishers = {} #dizionario che associa a ogni ID del marker un publisher per la posa in terna camera
@@ -90,6 +92,20 @@ class ArucoDetector(Node):
             cv2.imshow("Aruco", frame)
             cv2.waitKey(1)
             return
+
+        detected_ids = [int(marker_id[0]) for marker_id in ids]
+
+        now_stamp = self.get_clock().now()
+        should_log_detection = (
+            detected_ids != self.last_logged_ids or
+            self.last_detection_log_stamp is None or
+            (now_stamp - self.last_detection_log_stamp).nanoseconds > 1_000_000_000
+        )
+
+        if should_log_detection:
+            self.get_logger().info(f"ArUco rilevati: {detected_ids}")
+            self.last_logged_ids = detected_ids.copy()
+            self.last_detection_log_stamp = now_stamp
 
         # MODIFICATO: Stima la posa di TUTTI i marker in una sola chiamata
         # estimatePoseSingleMarkers restituisce array di rvec e tvec per ogni marker rilevato
@@ -156,6 +172,13 @@ class ArucoDetector(Node):
 
             # Pubblica la pose del marker nel frame della camera
             self.camera_publishers[marker_id].publish(pose_cam)
+
+            self.get_logger().info(
+                f"Marker {marker_id} | camera: "
+                f"x={pose_cam.pose.position.x:.3f}, "
+                f"y={pose_cam.pose.position.y:.3f}, "
+                f"z={pose_cam.pose.position.z:.3f}"
+            )
 
             # ==========================
             # CALCOLA POSE NEL FRAME BASE
@@ -232,6 +255,17 @@ class ArucoDetector(Node):
                 # Memorizziamo tutte le pose base di ogni marker rilevato
                 self.last_poses_base[marker_id] = pose_base
                 self.base_publishers[marker_id].publish(pose_base)
+
+                self.get_logger().info(
+                    f"Marker {marker_id} | base: "
+                    f"x={pose_base.pose.position.x:.3f}, "
+                    f"y={pose_base.pose.position.y:.3f}, "
+                    f"z={pose_base.pose.position.z:.3f}"
+                )
+            else:
+                self.get_logger().warn(
+                    f"Marker {marker_id} rilevato nel frame camera, ma la trasformazione verso base non e' disponibile."
+                )
 
         # Visualizza il frame con i marker rilevati
         cv2.imshow("Aruco", frame)

@@ -2,12 +2,12 @@ CHECKLIST COMPLETA - TASK 1 IMPLEMENTAZIONE LABORATORIO
 
 PREREQUISITI
 ============
-□ Verificare che il workspace ROS2 sia disponibile (~/progetto_n_ws/)
+□ Verificare che il workspace ROS2 sia disponibile (~/progetto_12_ws/)
 □ Verificare che Gazebo sia installato e funzionante
 □ Verificare che le dipendenze siano presenti (rclpy, cv2, cv_bridge, tf2_ros, scipy)
 □ Avere i due file nodi pronti:
-  - ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/det_task1.py
-  - ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/aruco_detector_all_markers.py
+  - ~/progetto_12_ws/src/task1_pkg/task1_pkg/det_task1.py
+  - ~/progetto_12_ws/src/task1_pkg/task1_pkg/aruco_detector_all_markers.py
 
 
 SETUP INIZIALE - CONFIGURAZIONE setup.py (IMPORTANTE!)
@@ -25,18 +25,18 @@ Se non aggiungete gli entry point, riceverete errore: "Could not find executable
 
 COME CONFIGURARE IL setup.py - STEP BY STEP
 =============================================
-□ Aprire il file setup.py del pacchetto progetto_robotica:
-  cat ~/progetto_n_ws/src/progetto_robotica/setup.py
+□ Aprire il file setup.py del pacchetto task1_pkg:
+  cat ~/progetto_12_ws/src/task1_pkg/setup.py
 
   OPPURE aprire in un editor:
-  nano ~/progetto_n_ws/src/progetto_robotica/setup.py
+  nano ~/progetto_12_ws/src/task1_pkg/setup.py
 
 □ Localizzare la sezione 'entry_points' (solitamente verso la fine del file)
   Dovrebbe assomigliare a:
   
   entry_points={
       'console_scripts': [
-          'det_task1 = progetto_robotica.det_task1:main',
+        'det_task1 = task1_pkg.det_task1:main',
       ],
   }
 
@@ -47,14 +47,14 @@ COME CONFIGURARE IL setup.py - STEP BY STEP
   
   entry_points={
       'console_scripts': [
-          'det_task1 = progetto_robotica.det_task1:main',
-          'aruco_detector_all_markers = progetto_robotica.aruco_detector_all_markers:main',
+        'det_task1 = task1_pkg.det_task1:main',
+        'aruco_detector_all_markers = task1_pkg.aruco_detector_all_markers:main',
       ],
   }
 
 □ Spiegazione della sintassi:
   'aruco_detector_all_markers' = nome del comando da usare in terminale (ros2 run <pkg> aruco_detector_all_markers)
-  'progetto_robotica' = nome del pacchetto
+  'task1_pkg' = nome del pacchetto
   'aruco_detector_all_markers' = nome del file Python (senza .py)
   'main' = nome della funzione principale nel file
 
@@ -62,18 +62,18 @@ COME CONFIGURARE IL setup.py - STEP BY STEP
   Se usate nano: Ctrl+O, Invio, Ctrl+X
 
 □ Verificare che il file sia stato salvato correttamente:
-  cat ~/progetto_n_ws/src/progetto_robotica/setup.py | grep -A 5 entry_points
+  cat ~/progetto_12_ws/src/task1_pkg/setup.py | grep -A 5 entry_points
 
 □ Dovrebbe mostrare ENTRAMBI gli entry point:
-  'det_task1 = progetto_robotica.det_task1:main'
-  'aruco_detector_all_markers = progetto_robotica.aruco_detector_all_markers:main'
+  'det_task1 = task1_pkg.det_task1:main'
+  'aruco_detector_all_markers = task1_pkg.aruco_detector_all_markers:main'
 
 
 TERMINALE 1 - SETUP AMBIENTE
 =============================
 □ Aprire un terminale
 □ Navigare nel workspace:
-  cd ~/progetto_n_ws/
+  cd ~/progetto_12_ws/
 
 □ Eseguire source per aggiornare le variabili di ambiente:
   source install/setup.bash
@@ -95,13 +95,13 @@ TERMINALE 2 - LANCIARE IL NODO ACTION SERVER (det_task1.py)
 ===========================================================
 □ Aprire un nuovo terminale
 □ Navigare nel workspace:
-  cd ~/progetto_n_ws/
+  cd ~/progetto_12_ws/
 
 □ Eseguire source:
   source install/setup.bash
 
 □ Lanciare il nodo action server per la scansione della testa:
-  ros2 run progetto_robotica det_task1
+  ros2 run task1_pkg det_task1
 
 □ Attendere il messaggio: "[INFO] Action server started, waiting for goals..."
 □ Il nodo rimane in ascolto di goal dall'action client
@@ -111,13 +111,13 @@ TERMINALE 3 - LANCIARE IL NODO DETECTOR ARUCO (aruco_detector_all_markers.py)
 =============================================================================
 □ Aprire un nuovo terminale
 □ Navigare nel workspace:
-  cd ~/progetto_n_ws/
+  cd ~/progetto_12_ws/
 
 □ Eseguire source:
   source install/setup.bash
 
 □ Lanciare il nodo di rilevamento ArUco:
-  ros2 run progetto_robotica aruco_detector_all_markers
+  ros2 run task1_pkg aruco_detector_all_markers
 
 □ Attendere che il nodo si avvii (non dovrebbe mostrare errori)
 □ Una finestra di visualizzazione OpenCV dovrebbe apparire (mostra i frame della camera con marker rilevati)
@@ -127,7 +127,7 @@ TERMINALE 4 - VERIFICARE I TOPIC DISPONIBILI (PRIMA DI INVIARE GOAL)
 ====================================================================
 □ Aprire un nuovo terminale
 □ Navigare nel workspace:
-  cd ~/progetto_n_ws/
+  cd ~/progetto_12_ws/
 
 □ Eseguire source:
   source install/setup.bash

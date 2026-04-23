@@ -2,69 +2,69 @@ CHECKLIST LAUNCH FILE - TASK 1 (REVISIONATA)
 
 OBIETTIVO
 =========
-Avviare in un solo comando:
-1) simulazione TIAGo in Gazebo,
-2) nodo action server scansione testa (`det_task1`),
-3) nodo detector ArUco (`aruco_detector_all_markers`).
+Avviare con il launch solo i nodi del Task 1:
+1) nodo action server scansione testa (`det_task1`),
+2) nodo detector ArUco (`aruco_detector_all_markers`).
+
+NOTA AULA: Gazebo/TIAGo viene avviato in un terminale separato.
 
 
 PERCORSI SORGENTE -> DESTINAZIONE (DA VERIFICARE)
-==================================================
-Sorgenti locali (questa repo):
-- /home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/Launch/launch_task1.py
-- /home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/nodi/det_task1.py
-- /home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/nodi/aruco_detector_all_markers.py
 
-Destinazioni nel workspace ROS2 (esempio: ~/progetto_n_ws):
-- ~/progetto_n_ws/src/progetto_robotica/launch/launch_task1.py
-- ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/det_task1.py
-- ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/aruco_detector_all_markers.py
+
+Destinazioni nel workspace ROS2 (workspace reale: ~/progetto_12_ws):
+- ~/progetto_12_ws/src/task1_pkg/launch/launch_task1.py
+- ~/progetto_12_ws/src/task1_pkg/task1_pkg/det_task1.py
+- ~/progetto_12_ws/src/task1_pkg/task1_pkg/aruco_detector_all_markers.py
 
 
 STEP 1 - POSIZIONAMENTO FILE
 ============================
 □ Verificare che esista la cartella launch del package:
-  mkdir -p ~/progetto_n_ws/src/progetto_robotica/launch
+  mkdir -p ~/progetto_12_ws/src/task1_pkg/launch
 
 □ Copiare il launch:
   cp "/home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/Launch/launch_task1.py" \
-     ~/progetto_n_ws/src/progetto_robotica/launch/
+  ~/progetto_12_ws/src/task1_pkg/launch/
 
 □ Copiare/aggiornare i nodi Python nel modulo package:
   cp "/home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/nodi/det_task1.py" \
-     ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/
+  ~/progetto_12_ws/src/task1_pkg/task1_pkg/
 
   cp "/home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/nodi/aruco_detector_all_markers.py" \
-     ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/
+      ~/progetto_12_ws/src/task1_pkg/task1_pkg/
 
 
 STEP 2 - setup.py (ENTRY POINT)
 ===============================
-□ In ~/progetto_n_ws/src/progetto_robotica/setup.py verificare `console_scripts`:
-  - 'det_task1 = progetto_robotica.det_task1:main'
-  - 'aruco_detector_all_markers = progetto_robotica.aruco_detector_all_markers:main'
+□ In ~/progetto_12_ws/src/task1_pkg/setup.py verificare `console_scripts`:
+  - 'det_task1 = task1_pkg.det_task1:main'
+  - 'aruco_detector_all_markers = task1_pkg.aruco_detector_all_markers:main'
 
 
 STEP 3 - BUILD E SOURCE CORRETTI
 ================================
 □ Compilare:
-  cd ~/progetto_n_ws
+  cd ~/progetto_12_ws
   source /opt/ros/humble/setup.bash
   colcon build --symlink-install
 
 □ Sorgentare overlay:
-  source ~/progetto_n_ws/install/setup.bash
+  source ~/progetto_12_ws/install/setup.bash
 
 
 STEP 4 - AVVIO LAUNCH UNICO
 ===========================
+□ Terminale separato per Gazebo (prima del launch Task 1):
+  ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
+
 □ Avvio:
-  ros2 launch progetto_robotica launch_task1.py
+  ros2 launch task1_pkg launch_task1.py
 
 □ Atteso:
-  - Gazebo/TIAGo parte correttamente
   - nodo `action_server_head_scan` attivo
   - nodo `aruco_detector` attivo
+  - Gazebo resta in esecuzione nel terminale separato
 
 
 STEP 5 - TEST RAPIDI
@@ -81,9 +81,9 @@ STEP 5 - TEST RAPIDI
 
 TROUBLESHOOTING MIRATO
 ======================
-1) Package TIAGo non trovato nel launch:
-   - verificare che sia installato un pacchetto tra `tiago_gazebo` o `tiago_gazebo_simulation`
-   - rifare source dell'ambiente
+1) Gazebo/TIAGo non avviato:
+  - non è più un errore del file `launch_task1.py`
+  - avviare Gazebo manualmente nel terminale dedicato
 
 2) `Could not find executable 'det_task1'`:
    - entry point mancanti in setup.py
@@ -96,6 +96,6 @@ TROUBLESHOOTING MIRATO
 
 NOTE FINALI
 ===========
-- Il comando corretto è: `ros2 launch progetto_robotica launch_task1.py`
+- Il comando corretto è: `ros2 launch task1_pkg launch_task1.py`
 - Evitare dipendenza da `source ~/.bashrc` per i test: usare source esplicito ROS + workspace.
 - In ROS2 non aspettarsi messaggi di tipo "ROS master" (tipici ROS1).

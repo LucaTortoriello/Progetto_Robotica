@@ -1,12 +1,12 @@
 Comandi da terminale - Esercitazione 2 (Topic)
 
 Terminale 1 - Creazione file nodo
-cd ~/progetto_n_ws/src/aruco_pkg/aruco_pkg/
+cd ~/progetto_12_ws/src/aruco_pkg/aruco_pkg/
 touch aruco_detection.py
 chmod +x aruco_detection.py
 
 Terminale 1 - Build package
-cd ~/progetto_n_ws/
+cd ~/progetto_12_ws/
 colcon build
 
 Terminale 1 - Avvio nodo

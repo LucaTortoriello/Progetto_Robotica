@@ -1,79 +1,66 @@
 Spiegazione aggiornata di launch_task1.py
 
-Il file launch_task1.py avvia in un solo comando i 3 componenti del Task 1:
-1) simulazione TIAGo,
-2) action server scansione testa,
-3) detector ArUco multi-marker.
+Il file launch_task1.py avvia i 2 nodi del Task 1:
+1) action server scansione testa,
+2) detector ArUco multi-marker.
+
+NOTA AULA: Gazebo/TIAGo è avviato in un terminale separato.
 
 
 1) Importazioni principali
 ==========================
 Import usati nel launch:
-- get_package_share_directory e PackageNotFoundError
-- IncludeLaunchDescription + PythonLaunchDescriptionSource
 - Node
+- DeclareLaunchArgument
+- LaunchConfiguration
 
 Servono per:
-- trovare i package ROS2 nel filesystem,
-- includere il launch TIAGo,
+- dichiarare argomenti launch configurabili,
+- usare i nomi nodo da linea di comando,
 - avviare i due nodi Python del progetto.
 
 
-2) Risoluzione robusta del launch TIAGo
-=======================================
-È stata aggiunta la funzione:
-- _resolve_tiago_gazebo_launch_path()
-
-Questa funzione prova in ordine:
-1. package `tiago_gazebo`
-2. package `tiago_gazebo_simulation`
-
-e cerca `launch/tiago_gazebo.launch.py`.
-
-Vantaggio: il file resta compatibile con setup diversi del laboratorio.
-Se nessun package è disponibile, il launch alza un errore esplicito.
+2) Struttura launch come da aula
+================================
+La funzione `generate_launch_description()` restituisce direttamente:
+- `DeclareLaunchArgument('det_node_name', default_value='action_server_head_scan')`
+- `DeclareLaunchArgument('aruco_node_name', default_value='aruco_detector')`
+- `Node(...)` per `det_task1` con `name=LaunchConfiguration('det_node_name')`
+- `Node(...)` per `aruco_detector_all_markers` con `name=LaunchConfiguration('aruco_node_name')`
+- `parameters=[{'use_sim_time': True}]` per entrambi i nodi.
 
 
-3) Include del launch TIAGo
-===========================
-L'include usa:
-- PythonLaunchDescriptionSource(percorso_launch_tiago)
-- parametro launch: `is_public_sim=True`
-
-Questo mantiene il comportamento usato nelle esercitazioni TIAGo in simulazione pubblica.
-
-
-4) Nodo scansione testa (Action Server)
+3) Nodo scansione testa (Action Server)
 =======================================
 Nodo lanciato:
-- package: `progetto_robotica`
+- package: `task1_pkg`
 - executable: `det_task1`
-- name: `action_server_head_scan`
+- name: `LaunchConfiguration('det_node_name')`
 
 Richiede in setup.py l'entry point:
-- 'det_task1 = progetto_robotica.det_task1:main'
+- 'det_task1 = task1_pkg.det_task1:main'
 
 
-5) Nodo detector ArUco
+4) Nodo detector ArUco
 ======================
 Nodo lanciato:
-- package: `progetto_robotica`
+- package: `task1_pkg`
 - executable: `aruco_detector_all_markers`
-- name: `aruco_detector`
+- name: `LaunchConfiguration('aruco_node_name')`
 
 Richiede in setup.py l'entry point:
-- 'aruco_detector_all_markers = progetto_robotica.aruco_detector_all_markers:main'
+- 'aruco_detector_all_markers = task1_pkg.aruco_detector_all_markers:main'
 
 
-6) Ordine di avvio
+5) Ordine di avvio
 ==================
 La LaunchDescription contiene:
-1. include launch TIAGo Gazebo
+1. argomenti launch (`det_node_name`, `aruco_node_name`)
 2. `det_task1`
 3. `aruco_detector_all_markers`
 
 
-7) Percorsi corretti da usare nel deployment
+6) Percorsi corretti da usare nel deployment
 ============================================
 Sorgenti (repo corrente):
 - /home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/Launch/launch_task1.py
@@ -81,16 +68,19 @@ Sorgenti (repo corrente):
 - /home/ubuntu/Cinematica Diretta/Progetto_Robotica/Task1/nodi/aruco_detector_all_markers.py
 
 Destinazioni nel workspace ROS2 (esempio):
-- ~/progetto_n_ws/src/progetto_robotica/launch/launch_task1.py
-- ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/det_task1.py
-- ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/aruco_detector_all_markers.py
+- ~/progetto_12_ws/src/task1_pkg/launch/launch_task1.py
+- ~/progetto_12_ws/src/task1_pkg/task1_pkg/det_task1.py
+- ~/progetto_12_ws/src/task1_pkg/task1_pkg/aruco_detector_all_markers.py
 
 
-8) Comando finale
+7) Comando finale
 =================
+Comando Gazebo (terminale separato):
+- ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
+
 Comando da usare:
-- ros2 launch progetto_robotica launch_task1.py
+- ros2 launch task1_pkg launch_task1.py
 
 Prerequisiti minimi:
 - build del workspace (`colcon build --symlink-install`)
-- source overlay (`source ~/progetto_n_ws/install/setup.bash`)
+- source overlay (`source ~/progetto_12_ws/install/setup.bash`)

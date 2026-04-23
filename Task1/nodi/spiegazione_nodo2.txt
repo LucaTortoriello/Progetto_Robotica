@@ -1,0 +1,96 @@
+Spiegazione delle modifiche in aruco_detector_all_markers.py
+
+Il file aruco_detector_all_markers.py deriva direttamente da single_aruco_detection.py.
+L'obiettivo era cambiare il meno possibile e intervenire solo nei punti necessari
+per far rilevare al robot TUTTI i marker ArUco presenti nella scena,
+non solo il primo marker visibile.
+
+1. Cambio del nome del nodo
+Nel blocco:
+super().__init__('aruco_detector_all_markers')
+
+il nome del nodo e' stato cambiato da 'aruco_detector_simple' a 'aruco_detector_all_markers'.
+Questa scelta facilita l'identificazione del nuovo comportamento nei log e nei topic.
+
+2. Strutture dati per memorizzare TUTTI i marker
+Nel blocco:
+self.last_poses_camera = {}   # {marker_id: pose_camera}
+self.last_poses_base = {}     # {marker_id: pose_base}
+self.last_detected_ids = []   # Lista degli ID rilevati nell'ultimo frame
+
+nel codice originale erano usate variabili singolari (self.last_pose_camera, self.last_pose_base, self.last_id).
+L'uso di dizionari permette di memorizzare le pose di TUTTI i marker contemporaneamente.
+Ogni marker_id e' associato alla sua pose specifica.
+La lista last_detected_ids tiene traccia di quali marker sono stati rilevati nell'ultimo frame,
+utile per la republish costante delle pose.
+
+3. Stima di posa per TUTTI i marker in una sola chiamata
+Nel blocco:
+rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
+    corners,           # Passo TUTTI gli angoli, non solo corners[0]
+    self.marker_size,
+    self.camera_matrix,
+    self.dist_coeffs
+)
+
+Nel codice originale si passavano solo corners[0] (il primo marker).
+Adesso vengono passati TUTTI i corners in una sola chiamata.
+La funzione restituisce array rvec e tvec di dimensione (n x 3) per n marker rilevati.
+Questa scelta e' piu' efficiente: una sola stima in batch invece di n stime separate.
+
+4. Loop su TUTTI i marker rilevati
+Nel blocco:
+for i in range(len(ids)):
+    marker_id = int(ids[i][0])
+    self.last_detected_ids.append(marker_id)
+    # ... elaborazione per ogni marker
+
+Nel codice originale elaborava solo ids[0][0] (il primo marker).
+Adesso itera su TUTTI gli elementi di ids.
+Ogni marker viene elaborato indipendentemente con i suoi rvec[i] e tvec[i].
+
+5. Accesso agli array con indice i
+Nel blocco:
+pose_cam.pose.position.x = float(tvec[i][0][0])  # Non tvec[0][0][0]
+quat = R.from_rotvec(rvec[i][0]).as_quat()       # Non rvec[0][0]
+pos_cam = np.array([tvec[i][0][0], tvec[i][0][1], tvec[i][0][2]])
+r_marker = R.from_rotvec(rvec[i][0])
+
+poiche' adesso si elabora il marker i-esimo (non solo il primo),
+tutti gli accessi ai vettori sono corretti con l'indice i.
+Questo garantisce che ogni marker usi i dati corretti.
+
+6. Memorizzazione in dizionari
+Nel blocco:
+self.last_poses_camera[marker_id] = pose_cam
+self.last_poses_base[marker_id] = pose_base
+
+Nel codice originale le variabili erano sovrascritte continuamente.
+Adesso ogni marker mantiene la propria pose memorizzata nel dizionario.
+Se vengono rilevati marker_id 1, 2, 3 nello stesso frame,
+tutti e tre mantengono le loro pose anche dopo il frame successivo.
+
+7. Trasformazione di coordinate per TUTTI i marker
+Il blocco di trasformazione da frame camera a frame base rimane invariato in struttura,
+ma adesso e' eseguito per ogni marker nel loop.
+Viene calcolata la pose di ogni marker nel frame 'base_footprint' utilizzando la trasformazione TF.
+
+8. Funzione republish() modificata
+Nel blocco:
+for marker_id in self.last_detected_ids:
+    if marker_id in self.last_poses_camera:
+        self.camera_publishers[marker_id].publish(self.last_poses_camera[marker_id])
+    if marker_id in self.last_poses_base:
+        self.base_publishers[marker_id].publish(self.last_poses_base[marker_id])
+
+Nel codice originale ripubblicava solo self.last_id (un marker).
+Adesso ripubblica TUTTI i marker dell'ultimo frame.
+Questo garantisce che le pose rimangono pubblicate anche se il robot smette
+di vedere i marker momentaneamente.
+
+In sintesi, le modifiche sono state limitate all'aggiunta del loop principale
+e all'uso di strutture dati che permettono di memorizzare piu' marker simultaneamente.
+La scelta e' stata quella di riutilizzare il codice gia' presente e aggiungere
+solo cio' che serviva per soddisfare i punti 3 e 4 della task 1:
+- Rilevare tutti gli ArUco nella scena
+- Trasformare le coordinate dal frame camera al frame base per ogni marker

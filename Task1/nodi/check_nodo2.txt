@@ -1,0 +1,274 @@
+CHECKLIST COMPLETA - TASK 1 IMPLEMENTAZIONE LABORATORIO
+
+PREREQUISITI
+============
+□ Verificare che il workspace ROS2 sia disponibile (~/progetto_n_ws/)
+□ Verificare che Gazebo sia installato e funzionante
+□ Verificare che le dipendenze siano presenti (rclpy, cv2, cv_bridge, tf2_ros, scipy)
+□ Avere i due file nodi pronti:
+  - ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/det_task1.py
+  - ~/progetto_n_ws/src/progetto_robotica/progetto_robotica/aruco_detector_all_markers.py
+
+
+SETUP INIZIALE - CONFIGURAZIONE setup.py (IMPORTANTE!)
+=======================================================
+COSA È IL setup.py?
+Il setup.py è il file di configurazione del pacchetto ROS2.
+Dice al sistema quali nodi sono disponibili nel pacchetto e come lanciarli con ros2 run.
+
+QUANDO configurarlo?
+PRIMA di eseguire colcon build. Questo è IL PRIMO STEP prima di tutto il resto.
+
+PERCHE' è necessario?
+Senza la configurazione nel setup.py, ROS2 non sa come eseguire i vostri nodi.
+Se non aggiungete gli entry point, riceverete errore: "Could not find executable..."
+
+COME CONFIGURARE IL setup.py - STEP BY STEP
+=============================================
+□ Aprire il file setup.py del pacchetto progetto_robotica:
+  cat ~/progetto_n_ws/src/progetto_robotica/setup.py
+
+  OPPURE aprire in un editor:
+  nano ~/progetto_n_ws/src/progetto_robotica/setup.py
+
+□ Localizzare la sezione 'entry_points' (solitamente verso la fine del file)
+  Dovrebbe assomigliare a:
+  
+  entry_points={
+      'console_scripts': [
+          'det_task1 = progetto_robotica.det_task1:main',
+      ],
+  }
+
+□ Verificare che 'det_task1' sia già presente (dal nodo 1)
+
+□ AGGIUNGERE il nuovo entry point per il nodo 2 (aruco_detector_all_markers)
+  Modificare la sezione 'console_scripts' per includerlo:
+  
+  entry_points={
+      'console_scripts': [
+          'det_task1 = progetto_robotica.det_task1:main',
+          'aruco_detector_all_markers = progetto_robotica.aruco_detector_all_markers:main',
+      ],
+  }
+
+□ Spiegazione della sintassi:
+  'aruco_detector_all_markers' = nome del comando da usare in terminale (ros2 run <pkg> aruco_detector_all_markers)
+  'progetto_robotica' = nome del pacchetto
+  'aruco_detector_all_markers' = nome del file Python (senza .py)
+  'main' = nome della funzione principale nel file
+
+□ Salvare il file:
+  Se usate nano: Ctrl+O, Invio, Ctrl+X
+
+□ Verificare che il file sia stato salvato correttamente:
+  cat ~/progetto_n_ws/src/progetto_robotica/setup.py | grep -A 5 entry_points
+
+□ Dovrebbe mostrare ENTRAMBI gli entry point:
+  'det_task1 = progetto_robotica.det_task1:main'
+  'aruco_detector_all_markers = progetto_robotica.aruco_detector_all_markers:main'
+
+
+TERMINALE 1 - SETUP AMBIENTE
+=============================
+□ Aprire un terminale
+□ Navigare nel workspace:
+  cd ~/progetto_n_ws/
+
+□ Eseguire source per aggiornare le variabili di ambiente:
+  source install/setup.bash
+
+□ Compilare il workspace per assicurarsi che tutti i pacchetti siano aggiornati:
+  colcon build
+
+
+TERMINALE 1 - LANCIARE TIAGO IN GAZEBO
+=======================================
+□ Lanciare TIAGo nella simulazione Gazebo:
+  ros2 launch tiago_gazebo tiago_gazebo.launch.py is_public_sim:=True
+
+□ Attendere che Gazebo si carichi completamente (il robot appare nella scena)
+□ Verificare che la console non mostri errori critici
+
+
+TERMINALE 2 - LANCIARE IL NODO ACTION SERVER (det_task1.py)
+===========================================================
+□ Aprire un nuovo terminale
+□ Navigare nel workspace:
+  cd ~/progetto_n_ws/
+
+□ Eseguire source:
+  source install/setup.bash
+
+□ Lanciare il nodo action server per la scansione della testa:
+  ros2 run progetto_robotica det_task1
+
+□ Attendere il messaggio: "[INFO] Action server started, waiting for goals..."
+□ Il nodo rimane in ascolto di goal dall'action client
+
+
+TERMINALE 3 - LANCIARE IL NODO DETECTOR ARUCO (aruco_detector_all_markers.py)
+=============================================================================
+□ Aprire un nuovo terminale
+□ Navigare nel workspace:
+  cd ~/progetto_n_ws/
+
+□ Eseguire source:
+  source install/setup.bash
+
+□ Lanciare il nodo di rilevamento ArUco:
+  ros2 run progetto_robotica aruco_detector_all_markers
+
+□ Attendere che il nodo si avvii (non dovrebbe mostrare errori)
+□ Una finestra di visualizzazione OpenCV dovrebbe apparire (mostra i frame della camera con marker rilevati)
+
+
+TERMINALE 4 - VERIFICARE I TOPIC DISPONIBILI (PRIMA DI INVIARE GOAL)
+====================================================================
+□ Aprire un nuovo terminale
+□ Navigare nel workspace:
+  cd ~/progetto_n_ws/
+
+□ Eseguire source:
+  source install/setup.bash
+
+□ Listare tutti i topic disponibili:
+  ros2 topic list
+
+□ Verificare che i topic di interesse NON SIANO ancora presenti:
+  - /aruco_camera_* (saranno creati dinamicamente dopo rilevamento)
+  - /aruco_base_* (saranno creati dinamicamente dopo rilevamento)
+  
+□ Questo è normale: i topic vengono creati solo quando il primo marker viene rilevato
+
+
+TERMINALE 4 - INVIARE IL GOAL PER LA SCANSIONE DELLA TESTA
+===========================================================
+□ Nel terminale 4 (stesso dove abbiamo controllato i topic), inviare il goal:
+  ros2 action send_goal /move_head my_robot_interfaces/action/MoveHead "{min: -0.217, max: 0.217, step: 0.05}"
+
+□ Attendere che il robot inizi a muovere la testa (in Gazebo dovrebbe vedersi il movimento)
+□ Il nodo det_task1.py nel Terminale 2 dovrebbe mostrare log del movimento
+□ La scansione dura alcuni secondi
+
+
+TERMINALE 4 - VERIFICARE I TOPIC ARUCO DOPO IL RILEVAMENTO
+===========================================================
+□ Durante o dopo la scansione, verificare che i topic ArUco siano stati creati:
+  ros2 topic list | grep aruco
+
+□ Dovrebbero apparire topic simili a:
+  - /aruco_camera_1
+  - /aruco_camera_2
+  - /aruco_camera_26
+  - /aruco_base_1
+  - /aruco_base_2
+  - /aruco_base_26
+  (i numeri dipendono dagli ID dei marker presenti nella scena)
+
+
+TERMINALE 4 - VISUALIZZARE LE POSE NEL FRAME CAMERA
+====================================================
+□ Scegliere uno dei marker rilevati (es. marker_id = 1)
+□ Visualizzare le pose pubblicate sul topic della camera:
+  ros2 topic echo /aruco_camera_1
+
+□ Dovrebbe mostrare messaggi PoseStamped con:
+  - header.frame_id = 'head_front_camera_color_optical_frame'
+  - position: x, y, z (coordinate nel frame della camera)
+  - orientation: x, y, z, w (quaternione nel frame della camera)
+
+□ Premere Ctrl+C per interrompere
+
+
+TERMINALE 4 - VISUALIZZARE LE POSE NEL FRAME BASE
+==================================================
+□ Visualizzare le pose pubblicate sul topic della base (COORDINATE TRASFORMATE):
+  ros2 topic echo /aruco_base_1
+
+□ Dovrebbe mostrare messaggi PoseStamped con:
+  - header.frame_id = 'base_footprint'
+  - position: x, y, z (coordinate nel frame base del robot)
+  - orientation: x, y, z, w (quaternione nel frame base del robot)
+
+□ Confrontare con /aruco_camera_1: le coordinate dovrebbero essere DIVERSE
+  (perché sono in frame di riferimento diversi)
+
+□ Premere Ctrl+C per interrompere
+
+
+TERMINALE 4 - VERIFICARE LA FREQUENZA DI PUBBLICAZIONE
+========================================================
+□ Verificare che i topic continuino a essere pubblicati anche dopo la scansione:
+  ros2 topic hz /aruco_base_1
+
+□ Dovrebbe mostrare una frequenza di pubblicazione (es. 10 Hz) dal timer di republish
+□ Anche se il robot non vede più il marker, la pose precedente viene ripubblicata continuamente
+
+□ Premere Ctrl+C per interrompere
+
+
+TERMINALE 4 - ELENCARE TUTTI I MARKER CONTEMPORANEAMENTE
+=========================================================
+□ Verificare tutti i marker rilevati in una singola scansione:
+  ros2 topic list | grep aruco_base
+
+□ Conta quanti topic /aruco_base_* sono presenti
+□ Questo numero corrisponde al numero di marker rilevati durante la scansione
+
+
+TERMINALE 4 - VISUALIZZARE INFORMAZIONI TF (FACOLTATIVO)
+=========================================================
+□ Verificare che la trasformazione camera->base sia disponibile:
+  ros2 run tf2_tools view_frames.py
+
+□ Questo genererà un file PDF con l'albero delle trasformazioni (tf_tree.pdf)
+□ Verificare che il frame 'head_front_camera_color_optical_frame' sia collegato a 'base_footprint'
+
+
+TERMINALE 3 - OSSERVARE LA FINESTRA DI VISUALIZZAZIONE
+=======================================================
+□ Nel Terminale 3 (dove è in esecuzione aruco_detector_all_markers.py):
+  - Dovrebbe essere aperta una finestra OpenCV che mostra l'immagine della camera
+  - Durante la scansione dovrebbe mostrare i marker rilevati con cornice e assi disegnati
+
+□ Verificare visualmente che i marker vengono rilevati correttamente
+□ Se nessun marker è visibile, la finestra mostrerà il frame grigio vuoto
+
+
+VERIFICA COMPLESSIVA - SCENARIO COMPLETO
+==========================================
+□ Tutti e tre i nodi sono in esecuzione:
+  Terminal 1: tiago_gazebo
+  Terminal 2: det_task1 (action server) - mostra "Action server started"
+  Terminal 3: aruco_detector_all_markers - mostra finestra OpenCV
+
+□ I topic /aruco_camera_* e /aruco_base_* sono pubblicati
+□ I dati nei topic base_frame differiscono da quelli nel camera_frame
+□ La frequenza di pubblicazione è costante (10 Hz dal timer)
+□ Nessun errore nei log dei nodi
+
+
+PULIZIA FINALE
+==============
+□ Premere Ctrl+C in Terminal 3 per fermare il detector ArUco
+□ Premere Ctrl+C in Terminal 2 per fermare l'action server
+□ Premere Ctrl+C in Terminal 1 per fermare Gazebo
+□ Chiudere la finestra OpenCV (se ancora aperta)
+
+
+NOTE IMPORTANTI
+===============
+- I topic /aruco_camera_* e /aruco_base_* vengono creati DINAMICAMENTE
+  quando il primo marker con quell'ID viene rilevato
+  
+- Se non vengono rilevati marker, nessun topic viene creato
+  (verificare che i marker ArUco siano presenti nella scena Gazebo)
+
+- Le coordinate base_frame dipendono dalla trasformazione TF camera->base
+  Se questa non è disponibile, solo le pose camera_frame saranno pubblicate
+
+- Il timer di republish (100ms) mantiene costanti le pose anche se il robot
+  smette di vedere momentaneamente i marker
+
+- Per debug: usare "ros2 node list" per verificare che i tre nodi siano attivi

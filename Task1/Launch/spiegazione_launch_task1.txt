@@ -1,0 +1,96 @@
+Spiegazione di launch_task1.py
+
+Il file launch_task1.py è un launch file ROS2 che avvia automaticamente
+TUTTI i componenti necessari per eseguire il task 1 in un'unica operazione.
+
+1. Importazioni necessarie
+Nel blocco iniziale:
+from ament_index_python.packages import get_package_share_directory
+from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+
+queste importazioni forniscono le funzioni per:
+- Trovare i pacchetti ROS2 nel filesystem
+- Creare nodi ROS2 nel launch file
+- Includere altri launch file all'interno di questo
+
+2. Funzione principale generate_launch_description()
+Questa funzione è obbligatoria per ogni launch file ROS2.
+Ritorna un oggetto LaunchDescription che contiene tutte le azioni da eseguire.
+
+3. Inclusione del launch file di TIAGo Gazebo
+Nel blocco:
+tiago_gazebo_pkg = get_package_share_directory('tiago_gazebo_simulation')
+tiago_gazebo_launch = os.path.join(
+    tiago_gazebo_pkg,
+    'launch',
+    'tiago_gazebo.launch.py'
+)
+
+tiago_gazebo_launch_description = IncludeLaunchDescription(
+    PythonLaunchDescriptionSource(tiago_gazebo_launch),
+    launch_arguments={
+        'is_public_sim': 'True'
+    }
+)
+
+La funzione get_package_share_directory trova il percorso del pacchetto tiago_gazebo_simulation.
+IncludeLaunchDescription permette di inserire un altro launch file dentro questo.
+Il parametro is_public_sim=True abilita la modalità simulazione pubblica come nelle esercitazioni.
+
+4. Nodo Action Server (det_task1)
+Nel blocco:
+det_task1_node = Node(
+    package='progetto_robotica',
+    executable='det_task1',
+    output='screen',
+    name='action_server_head_scan'
+)
+
+Questo avvia il nodo det_task1 che implementa l'action server per la scansione della testa.
+- package: il pacchetto dove si trova il nodo
+- executable: il nome dell'eseguibile (corrisponde al entry point in setup.py)
+- output='screen': i log del nodo vengono mostrati nel terminale
+- name: identificativo del nodo nel sistema ROS2
+
+5. Nodo Detector ArUco (aruco_detector_all_markers)
+Nel blocco:
+aruco_detector_node = Node(
+    package='progetto_robotica',
+    executable='aruco_detector_all_markers',
+    output='screen',
+    name='aruco_detector'
+)
+
+Questo avvia il nodo aruco_detector_all_markers che rileva i marker ArUco.
+Stesso schema del nodo det_task1.
+
+6. Return della LaunchDescription
+Nel blocco finale:
+return LaunchDescription([
+    tiago_gazebo_launch_description,
+    det_task1_node,
+    aruco_detector_node
+])
+
+Ritorna una lista ordinata di tutte le azioni da eseguire:
+1. Prima viene lanciato Gazebo con il robot TIAGo
+2. Poi viene lanciato l'action server per la scansione della testa
+3. Infine viene lanciato il detector di marker ArUco
+
+Vantaggi di usare un launch file
+=================================
+- Una sola linea di comando per avviare tutto (invece di 3 terminali separati)
+- Utile per testing e deployment in ambienti di laboratorio/fabbrica
+- Semplifica la documentazione delle procedure di avvio
+- Se un componente crasha, il launch file può essere configurato per riavviarlo automaticamente
+- Output centralizzato: tutti i log vengono mostrati sullo stesso stream
+
+ATTENZIONE
+==========
+- Gli entry point nei file setup.py del pacchetto progetto_robotica devono contenere:
+  'det_task1 = progetto_robotica.det_task1:main'
+  'aruco_detector_all_markers = progetto_robotica.aruco_detector_all_markers:main'
+  
+- Il pacchetto deve essere compilato con: colcon build

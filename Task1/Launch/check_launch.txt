@@ -98,4 +98,4 @@ NOTE FINALI
 ===========
 - Il comando corretto è: `ros2 launch my_bringup launch_task1.py`
 - Evitare dipendenza da `source ~/.bashrc` per i test: usare source esplicito ROS + workspace.
-- In ROS2 non aspettarsi messaggi di tipo "ROS master" (tipici ROS1).
+

@@ -11,7 +11,7 @@ import numpy as np
 from cv_bridge import CvBridge #per convertire ROS Image in OpenCV Image (comunicazione tra ROS e OpenCV)
 
 import tf2_ros #solo per trasformazioni
-from scipy.spatial.transform import Rotation as R #solo per rotazioni (evitiamo di fare tutto a mano)
+from scipy.spatial.transform import Rotation as R
 
 
 class ArucoDetector(Node):
@@ -31,7 +31,7 @@ class ArucoDetector(Node):
             CameraInfo,
             '/head_front_camera/rgb/camera_info', #si sottoscrive camera_info e callback
             self.camera_info_callback,
-            10 #queue size: permette di accumulare n numero di informazioni e per svuota la memoria. 10 numero aureo
+            10 #queue size
         )
 
         # Timer republish
@@ -43,8 +43,8 @@ class ArucoDetector(Node):
         self.camera_matrix = None # matrice intrinseca della camera, inizialmente None, poi viene aggiornata quando arriva il messaggio camera_info
         self.dist_coeffs = None  # distorsione della camera, inizialmente None, poi viene aggiornata quando arriva il messaggio camera_info
 
-        # MODIFICATO: Ora memorizziamo le pose di TUTTI i marker, non solo uno
-        # Dizionari che associano ID marker -> (ultima posa camera, ultima posa base)
+        # Vengono memorizzate le pose di TUTTI i marker
+        # Dizionari che associano ID marker: (ultima posa camera, ultima posa base)
         self.last_poses_camera = {}  # {marker_id: pose_camera}
         self.last_poses_base = {}    # {marker_id: pose_base}
         self.last_detected_ids = []  # Lista degli ID rilevati nell'ultimo frame
@@ -107,8 +107,7 @@ class ArucoDetector(Node):
             self.last_logged_ids = detected_ids.copy()
             self.last_detection_log_stamp = now_stamp
 
-        # MODIFICATO: Stima la posa di TUTTI i marker in una sola chiamata
-        # estimatePoseSingleMarkers restituisce array di rvec e tvec per ogni marker rilevato
+        # Stima la posa di TUTTI i marker in una sola chiamata
         rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
             corners,
             self.marker_size,
@@ -117,17 +116,16 @@ class ArucoDetector(Node):
         )
 
         cv2.aruco.drawDetectedMarkers(frame, corners, ids)
-        # Disegna gli assi per il primo marker (per visualizzazione)
-        # Se vuoi disegnare assi per tutti i marker, usa un loop
+        # Disegna gli assi per il primo marker
         cv2.aruco.drawAxis(frame, self.camera_matrix, self.dist_coeffs, rvec[0], tvec[0], 0.03)
 
-        # MODIFICATO: Resetta la lista degli ID rilevati in questo frame
+        # Resetta la lista degli ID rilevati in questo frame
         self.last_detected_ids = []
 
         # ==========================
         # LOOP SU TUTTI I MARKER RILEVATI
         # ==========================
-        # MODIFICATO: Itera su TUTTI i marker rilevati, non solo il primo (i = 0)
+        # Itera su TUTTI i marker rilevati
         for i in range(len(ids)):
             marker_id = int(ids[i][0])
             self.last_detected_ids.append(marker_id)
@@ -152,25 +150,25 @@ class ArucoDetector(Node):
             pose_cam.header.stamp = msg.header.stamp
             pose_cam.header.frame_id = self.camera_frame
 
-            # MODIFICATO: Accedi all'i-esimo marker nel vettore di risultati
+            # Accede all'i-esimo marker nel vettore di risultati
             # rvec e tvec sono array n x 3 (per n marker rilevati)
             pose_cam.pose.position.x = float(tvec[i][0][0])
-            # Estrai coordinate Y e Z del marker dalla camera
+            # Estrae coordinate Y e Z del marker dalla camera
             # Descrive traslazione lungo asse x y e z
             pose_cam.pose.position.y = float(tvec[i][0][1])
             pose_cam.pose.position.z = float(tvec[i][0][2])
 
-            # Converti il vettore di rotazione (rvec) in quaternione e assegna alla pose
+            # Converte il vettore di rotazione (rvec) in quaternione e assegna alla pose
             quat = R.from_rotvec(rvec[i][0]).as_quat()
             pose_cam.pose.orientation.x = float(quat[0])
             pose_cam.pose.orientation.y = float(quat[1])
             pose_cam.pose.orientation.z = float(quat[2])
             pose_cam.pose.orientation.w = float(quat[3])
 
-            # MODIFICATO: Salva le pose di TUTTI i marker in dizionari
+            # Salva le pose di TUTTI i marker in dizionari
             self.last_poses_camera[marker_id] = pose_cam
 
-            # Pubblica la pose del marker nel frame della camera
+            # Pubblica la posa del marker nel frame della camera
             self.camera_publishers[marker_id].publish(pose_cam)
 
             self.get_logger().info(
@@ -197,13 +195,13 @@ class ArucoDetector(Node):
                     self.camera_frame,
                     Time()
                 ) 
-                # Estrai la posizione del marker nel frame della camera
-                # Trasformiamo in numpy array per semplicita'
-                # MODIFICATO: Accedi all'i-esimo marker
+                # Estrae la posizione del marker nel frame della camera
+                # Trasforma in numpy array
+                # Accede all'i-esimo marker
                 pos_cam = np.array([tvec[i][0][0], tvec[i][0][1], tvec[i][0][2]])
 
                 # Recupera la rotazione della trasformazione camera->base
-                #Riusciamo a ricostruire la catena
+                # Ricostruzione della catena
                 q = transform.transform.rotation #accesso al quaternione
                 # Rotazione (r) a partire dal quaternione. Prendiamo gli elementi
                 r = R.from_quat([q.x, q.y, q.z, q.w]) # Ricaviamo matrice di rotazione dalla camera alla base 
@@ -223,7 +221,6 @@ class ArucoDetector(Node):
 
                 # Trasforma la rotazione del marker dal frame camera al frame base
                 # Rotazione del marker in terna camera
-                # MODIFICATO: Accedi all'i-esimo marker
                 r_marker = R.from_rotvec(rvec[i][0])
                 # Rotazione in terna base del marker, considerando la rotazione tra camera e base (r) e la rotazione 
                 # del marker in terna camera (r_marker)
@@ -251,7 +248,7 @@ class ArucoDetector(Node):
                 pose_base.pose.orientation.z = float(quat_base[2])
                 pose_base.pose.orientation.w = float(quat_base[3])
 
-                # MODIFICATO: Mantiene le informazioni sulle posizioni di TUTTI i marker per fare pick and place
+                # Mantiene le informazioni sulle posizioni di TUTTI i marker per fare pick and place
                 # Memorizziamo tutte le pose base di ogni marker rilevato
                 self.last_poses_base[marker_id] = pose_base
                 self.base_publishers[marker_id].publish(pose_base)
@@ -279,7 +276,7 @@ class ArucoDetector(Node):
     def republish(self):
         """Ripubblica la pose di TUTTI i marker rilevati nell'ultimo frame"""
         
-        # MODIFICATO: Itera su tutti gli ID rilevati nell'ultimo frame
+        # Itera su tutti gli ID rilevati nell'ultimo frame
         for marker_id in self.last_detected_ids:
             # Ripubblica la pose nel frame della camera
             if marker_id in self.last_poses_camera:

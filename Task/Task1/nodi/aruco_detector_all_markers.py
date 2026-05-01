@@ -122,17 +122,14 @@ class ArucoDetector(Node):
         # Resetta la lista degli ID rilevati in questo frame
         self.last_detected_ids = []
 
-        # ==========================
-        # LOOP SU TUTTI I MARKER RILEVATI
-        # ==========================
+       
         # Itera su TUTTI i marker rilevati
         for i in range(len(ids)):
             marker_id = int(ids[i][0])
             self.last_detected_ids.append(marker_id)
 
-            # ==========================
-            # CREATE PUBLISHER DINAMICI
-            # ==========================
+
+            # publisher dinamici
             if marker_id not in self.camera_publishers:
                 topic_cam = f"/aruco_camera_{marker_id}"
                 self.camera_publishers[marker_id] = self.create_publisher(PoseStamped, topic_cam, 10)
@@ -142,9 +139,8 @@ class ArucoDetector(Node):
                 topic_base = f"/aruco_base_{marker_id}"
                 self.base_publishers[marker_id] = self.create_publisher(PoseStamped, topic_base, 10)
 
-            # ==========================
-            # POSE CAMERA
-            # ==========================
+
+            # pose camera 
             pose_cam = PoseStamped()
             #crea un messaggio di tipo PoseStamped, che contiene la posa del marker rispetto alla camera
             pose_cam.header.stamp = msg.header.stamp
@@ -178,9 +174,8 @@ class ArucoDetector(Node):
                 f"z={pose_cam.pose.position.z:.3f}"
             )
 
-            # ==========================
-            # CALCOLA POSE NEL FRAME BASE
-            # ==========================
+            
+            # Calcola pose nel frame base 
             # Verifica se la trasformazione camera->base è disponibile
             if self.tf_buffer.can_transform(
                 self.base_frame,
@@ -270,9 +265,8 @@ class ArucoDetector(Node):
 
         #Mostra ARUCO marker nell'ambiente 
 
-    # ==========================
-    # REPUBLISH
-    # ==========================
+  
+    # republish
     def republish(self):
         """Ripubblica la pose di TUTTI i marker rilevati nell'ultimo frame"""
         

@@ -118,6 +118,10 @@ cd ~/ros2_ws/src/tiago_simulation
 python3 single_aruco_detection.py
 ```
 
+### Screencast
+
+Il video dimostrativo è disponibile nella cartella [video](video).
+
 ---
 
 ## Task 1: Modellazione e Localizzazione

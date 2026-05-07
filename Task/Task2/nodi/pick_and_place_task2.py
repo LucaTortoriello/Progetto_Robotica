@@ -16,6 +16,7 @@
 import os
 import time
 import functools
+import subprocess
 
 import rclpy
 from rclpy.node import Node
@@ -61,6 +62,9 @@ class TiagoPickAndPlaceTask2(Node):
         self.declare_parameter('aruco_D', 4)
         # Percorso del file URDF per RoboticsToolbox
         self.declare_parameter('urdf_path', os.path.expanduser('~/tiago_public_ws/src/my_robot_description/urdf/tiago_robot.urdf'))
+        # Se true, il nodo prova a eseguire automaticamente la motion "unfold_arm"
+        # tramite play_motion2 prima di iniziare il pick & place.
+        self.declare_parameter('run_unfold_arm', True)
 
         # Mappatura etichette -> ID marker
         self.marker_ids = {
@@ -148,7 +152,7 @@ class TiagoPickAndPlaceTask2(Node):
         # ==================================================
         # Carica il modello URDF di TIAGo usando RoboticsToolbox
         # Questo permette di fare cinematica diretta/inversa
-        urdf_loc = self.get_parameter('urdf_path').value
+        urdf_loc = os.path.expanduser(str(self.get_parameter('urdf_path').value))
         self.robot = ERobot.URDF(urdf_loc)
         # Trasformazione per allineare il gripper al marker ArUco
         # Ruota di 90° attorno Y e -90° attorno Z per orientare correttamente l'end-effector
@@ -164,8 +168,10 @@ class TiagoPickAndPlaceTask2(Node):
         self.init_saved = False
         # Configurazione "comoda" salvata come stato iniziale del robot
         self.ready_pose = None
+        self.ready_pose_after_unfold = None
         # Ultima configurazione inviata ai controller (usata come q0 per IK)
         self.q_sent = None
+        self.last_plan_ok = False
 
         # ==================================================
         # Stato della macchina a stati
@@ -173,9 +179,10 @@ class TiagoPickAndPlaceTask2(Node):
         # Indice del task corrente (0 = Coca-Cola, 1 = Pringles)
         self.current_task_index = 0
         # Stato corrente della macchina a stati
-        self.state = 'INIT'
+        self.state = 'UNFOLD_ARM'
         # Timestamp per aspettare tra stati
         self.wait_until = 0.0
+        self.last_wait_marker_log = 0.0
 
         # ==================================================
         # Client per attach/detach
@@ -196,6 +203,13 @@ class TiagoPickAndPlaceTask2(Node):
         # Esegue il loop ogni 0.5 secondi per controllare lo stato e avanzare
         self.timer = self.create_timer(0.5, self.loop)
         self.get_logger().info('Nodo Task2 Pick & Place avviato')
+        self.get_logger().info(
+            'Marker configurati: '
+            f"A=/aruco_base_{self.marker_ids['A']}, "
+            f"B=/aruco_base_{self.marker_ids['B']}, "
+            f"C=/aruco_base_{self.marker_ids['C']}, "
+            f"D=/aruco_base_{self.marker_ids['D']}"
+        )
 
     # ==================================================
     # Callbacks
@@ -217,7 +231,8 @@ class TiagoPickAndPlaceTask2(Node):
             # Salva la configurazione iniziale come "configurazione comoda"
             self.ready_pose = np.concatenate((self.q0_torso, self.q0_arm))
             self.init_saved = True
-            self.get_logger().info('Configurazione iniziale salvata come config comoda')
+            self.q_sent = self.ready_pose.copy()
+            self.get_logger().info('Configurazione iniziale salvata')
 
     def pose_callback(self, label, msg):
         # Salva la posa del marker ArUco ricevuto (label = 'A', 'B', 'C', 'D')
@@ -271,14 +286,13 @@ class TiagoPickAndPlaceTask2(Node):
             return
 
         # ==================================================
-        # INIT: Inizializzazione - vai in configurazione comoda
+        # UNFOLD_ARM: porta automaticamente il braccio in una posa comoda
         # ==================================================
-        if self.state == 'INIT':
+        if self.state == 'UNFOLD_ARM':
             if not self.init_saved:
                 return
-            self.get_logger().info('Invio configurazione comoda al controller')
-            self.send_trajectory(self.ready_pose)
-            self.wait_until = time.time() + 3  # Aspetta 3 secondi per raggiungere la posizione
+            self.run_unfold_arm_motion()
+            self.wait_until = time.time() + 4
             self.state = 'WAIT_READY'
             return
 
@@ -288,6 +302,10 @@ class TiagoPickAndPlaceTask2(Node):
         if self.state == 'WAIT_READY':
             if time.time() < self.wait_until:
                 return
+            if self.q0_ready:
+                self.ready_pose_after_unfold = np.concatenate((self.q0_torso, self.q0_arm))
+                self.ready_pose = self.ready_pose_after_unfold.copy()
+                self.q_sent = self.ready_pose.copy()
             self.get_logger().info('Configurazione comoda raggiunta. Inizio Task2')
             self.state = 'WAIT_MARKER'
             return
@@ -297,8 +315,11 @@ class TiagoPickAndPlaceTask2(Node):
         # ==================================================
         if self.state == 'WAIT_MARKER':
             if not self.have_task_poses():
+                self.log_missing_task_poses()
                 return
-            self.plan_pick_approach()  # Pianifica movimento sopra il pick
+            if not self.plan_pick_approach():  # Pianifica movimento sopra il pick
+                self.state = 'ERROR'
+                return
             self.state = 'MOVE_ABOVE_PICK'
             self.wait_until = time.time() + 4  # Aspetta movimento
             return
@@ -310,7 +331,9 @@ class TiagoPickAndPlaceTask2(Node):
             if time.time() < self.wait_until:
                 return
             self.get_logger().info('Posiziono il gripper sopra il pick')
-            self.lower_to_pick()  # Abbassa verso l'oggetto
+            if not self.lower_to_pick():  # Abbassa verso l'oggetto
+                self.state = 'ERROR'
+                return
             self.state = 'LOWER_PICK'
             self.wait_until = time.time() + 3
             return
@@ -335,7 +358,9 @@ class TiagoPickAndPlaceTask2(Node):
                 return
             self.attach_object()  # Attacca l'oggetto al gripper in Gazebo
             self.get_logger().info('Oggetto attaccato al gripper')
-            self.plan_place_approach()  # Pianifica movimento verso il place
+            if not self.plan_place_approach():  # Pianifica movimento verso il place
+                self.state = 'ERROR'
+                return
             self.state = 'MOVE_TO_PLACE'
             self.wait_until = time.time() + 4
             return
@@ -347,7 +372,9 @@ class TiagoPickAndPlaceTask2(Node):
             if time.time() < self.wait_until:
                 return
             self.get_logger().info('Sposto il pezzo verso la posizione di place')
-            self.lower_to_place()  # Abbassa nella posizione finale
+            if not self.lower_to_place():  # Abbassa nella posizione finale
+                self.state = 'ERROR'
+                return
             self.state = 'LOWER_PLACE'
             self.wait_until = time.time() + 3
             return
@@ -372,6 +399,8 @@ class TiagoPickAndPlaceTask2(Node):
                 return
             self.detach_object()  # Stacca l'oggetto dal gripper in Gazebo
             self.get_logger().info('Oggetto staccato')
+            self.open_gripper()
+            self.go_to_ready_pose()
             self.state = 'RETURN_SAFE'
             self.wait_until = time.time() + 3
             return
@@ -391,6 +420,14 @@ class TiagoPickAndPlaceTask2(Node):
             self.state = 'WAIT_MARKER'  # Torna ad aspettare i marker per il nuovo task
             return
 
+        if self.state == 'ERROR':
+            self.get_logger().error(
+                'Task2 interrotto: pianificazione o IK fallita. '
+                'Verificare marker, offset, URDF e controller prima di riprovare.'
+            )
+            self.state = 'DONE'
+            return
+
     # ==================================================
     # Planning helpers
     # ==================================================
@@ -402,6 +439,24 @@ class TiagoPickAndPlaceTask2(Node):
         pick_label = task['pick']
         place_label = task['place']
         return pick_label in self.marker_poses and place_label in self.marker_poses
+
+    def log_missing_task_poses(self):
+        now = time.time()
+        if now - self.last_wait_marker_log < 5.0:
+            return
+        self.last_wait_marker_log = now
+
+        task = self.tasks[self.current_task_index]
+        required_labels = [task['pick'], task['place']]
+        missing = [
+            f"{label} (/aruco_base_{self.marker_ids[label]})"
+            for label in required_labels
+            if label not in self.marker_poses
+        ]
+        received = sorted(self.marker_poses.keys())
+        self.get_logger().info(
+            f"Attendo marker per {task['name']}: mancanti {missing}; ricevuti {received}"
+        )
 
     def get_current_task_poses(self):
         # Restituisce le pose di pick e place per il task corrente
@@ -418,6 +473,8 @@ class TiagoPickAndPlaceTask2(Node):
         if q_target is not None:
             self.send_trajectory(q_target)
             self.q_sent = q_target
+            return True
+        return False
 
     def lower_to_pick(self):
         # Abbassa il gripper nella posizione di pick
@@ -428,6 +485,8 @@ class TiagoPickAndPlaceTask2(Node):
         if q_target is not None:
             self.send_trajectory(q_target)
             self.q_sent = q_target
+            return True
+        return False
 
     def plan_place_approach(self):
         # Pianifica il movimento sopra la posizione di place
@@ -438,6 +497,8 @@ class TiagoPickAndPlaceTask2(Node):
         if q_target is not None:
             self.send_trajectory(q_target)
             self.q_sent = q_target
+            return True
+        return False
 
     def lower_to_place(self):
         # Abbassa l'oggetto nella posizione finale di place
@@ -448,15 +509,25 @@ class TiagoPickAndPlaceTask2(Node):
         if q_target is not None:
             self.send_trajectory(q_target)
             self.q_sent = q_target
+            return True
+        return False
 
     def solve_ik(self, pose):
         # Risolvi l'inverse kinematics per raggiungere la posa desiderata
         # Usa la configurazione precedente come punto di partenza
         try:
-            solution = self.robot.ik_NR(pose, q0=self.q_sent, pinv=True)
+            q0 = self.q_sent if self.q_sent is not None else self.ready_pose
+            solution = self.robot.ik_NR(pose, q0=q0, pinv=True)
             if solution is None or len(solution) == 0:
                 raise ValueError('IK fallita')
-            return solution[0]
+            if hasattr(solution, 'success') and not solution.success:
+                raise ValueError(f'IK non convergente: {solution}')
+            if len(solution) > 1 and isinstance(solution[1], (bool, np.bool_)) and not solution[1]:
+                raise ValueError(f'IK non convergente: {solution}')
+            q = np.array(solution[0]).flatten()
+            if len(q) != len(self.joint_names):
+                raise ValueError(f'IK ha restituito {len(q)} giunti, attesi {len(self.joint_names)}')
+            return q
         except Exception as ex:
             self.get_logger().warn(f'IK fallita: {ex}')
             return None
@@ -513,6 +584,42 @@ class TiagoPickAndPlaceTask2(Node):
         self.arm_pub.publish(traj_arm)
         self.torso_pub.publish(traj_torso)
 
+    def run_unfold_arm_motion(self):
+        if not self._as_bool(self.get_parameter('run_unfold_arm').value):
+            self.get_logger().info('unfold_arm automatico disabilitato: uso la configurazione corrente')
+            self.go_to_ready_pose()
+            return
+
+        self.get_logger().info('Eseguo automaticamente play_motion2 run_motion unfold_arm')
+        try:
+            completed = subprocess.run(
+                ['ros2', 'run', 'play_motion2', 'run_motion', 'unfold_arm'],
+                check=False,
+                timeout=30
+            )
+            if completed.returncode == 0:
+                self.get_logger().info('Motion unfold_arm completata')
+                return
+            self.get_logger().warn(
+                f'unfold_arm ha restituito codice {completed.returncode}; uso la posa corrente come fallback'
+            )
+        except Exception as ex:
+            self.get_logger().warn(f'Impossibile eseguire unfold_arm: {ex}; uso la posa corrente come fallback')
+        self.go_to_ready_pose()
+
+    def _as_bool(self, value):
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() in ('1', 'true', 'yes', 'on')
+
+    def go_to_ready_pose(self):
+        if self.ready_pose is None:
+            self.get_logger().warn('ready_pose non disponibile')
+            return False
+        self.send_trajectory(self.ready_pose)
+        self.q_sent = self.ready_pose.copy()
+        return True
+
     def attach_object(self):
         # Attacca l'oggetto corrente al gripper in Gazebo
         # Questo permette di simulare il pick & place fisico
@@ -521,7 +628,8 @@ class TiagoPickAndPlaceTask2(Node):
         req.link_name_1 = 'gripper_left_finger_link'  # Link del gripper
         req.model_name_2 = self.tasks[self.current_task_index]['model_name']  # Oggetto da attaccare
         req.link_name_2 = 'link'  # Link dell'oggetto
-        self.attach_client.call_async(req)
+        future = self.attach_client.call_async(req)
+        future.add_done_callback(functools.partial(self.attach_response_callback, 'attach'))
         self.get_logger().info('Richiesta attach inviata')
 
     def detach_object(self):
@@ -531,8 +639,21 @@ class TiagoPickAndPlaceTask2(Node):
         req.link_name_1 = 'gripper_left_finger_link'
         req.model_name_2 = self.tasks[self.current_task_index]['model_name']
         req.link_name_2 = 'link'
-        self.detach_client.call_async(req)
+        future = self.detach_client.call_async(req)
+        future.add_done_callback(functools.partial(self.attach_response_callback, 'detach'))
         self.get_logger().info('Richiesta detach inviata')
+
+    def attach_response_callback(self, operation, future):
+        try:
+            response = future.result()
+        except Exception as ex:
+            self.get_logger().error(f'Service {operation} fallito: {ex}')
+            return
+
+        if hasattr(response, 'ok') and not response.ok:
+            self.get_logger().error(f'Service {operation} ha risposto ok=false')
+            return
+        self.get_logger().info(f'Service {operation} completato')
 
 
 def main(args=None):

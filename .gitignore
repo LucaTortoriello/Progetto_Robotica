@@ -47,6 +47,16 @@ env/
 *.temp
 *.log
 
+# Ignora video e registrazioni
+video/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.wmv
+*.m4v
+
 # Ignora file di configurazione locale
 local_config.py
 config_local.py

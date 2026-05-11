@@ -64,8 +64,8 @@ Esempio con parametri espliciti:
 
 ```bash
 ros2 launch my_bringup launch_task2.py \
-  aruco_A:=1 aruco_B:=2 aruco_C:=3 aruco_D:=4 \
-  urdf_path:=/home/<utente>/tiago_public_ws/src/my_robot_description/urdf/tiago_robot.urdf \
+  aruco_A:=26 aruco_B:=63 aruco_C:=4 aruco_D:=3 \
+  urdf_path:=/home/<utente>/progetto_12_ws/src/my_robot_description/urdf/tiago_robot.urdf \
   run_unfold_arm:=true
 ```
 

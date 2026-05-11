@@ -17,7 +17,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'urdf_path',
-            default_value='~/tiago_public_ws/src/my_robot_description/urdf/tiago_robot.urdf'
+            default_value='~/progetto_12_ws/src/my_robot_description/urdf/tiago_robot.urdf'
         ),
         DeclareLaunchArgument(
             'run_unfold_arm',
@@ -25,19 +25,19 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'aruco_A',
-            default_value='1'
+            default_value='26'
         ),
         DeclareLaunchArgument(
             'aruco_B',
-            default_value='2'
+            default_value='63'
         ),
         DeclareLaunchArgument(
             'aruco_C',
-            default_value='3'
+            default_value='4'
         ),
         DeclareLaunchArgument(
             'aruco_D',
-            default_value='4'
+            default_value='3'
         ),
         Node(
             emulate_tty=True,

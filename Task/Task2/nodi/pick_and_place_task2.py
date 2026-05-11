@@ -56,12 +56,12 @@ class TiagoPickAndPlaceTask2(Node):
         # ==================================================
         # ID dei marker ArUco corrispondenti alle posizioni A, B, C, D
         # Possono essere cambiati se i marker hanno ID diversi
-        self.declare_parameter('aruco_A', 1)
-        self.declare_parameter('aruco_B', 2)
-        self.declare_parameter('aruco_C', 3)
-        self.declare_parameter('aruco_D', 4)
+        self.declare_parameter('aruco_A', 26)
+        self.declare_parameter('aruco_B', 63)
+        self.declare_parameter('aruco_C', 4)
+        self.declare_parameter('aruco_D', 3)
         # Percorso del file URDF per RoboticsToolbox
-        self.declare_parameter('urdf_path', os.path.expanduser('~/tiago_public_ws/src/my_robot_description/urdf/tiago_robot.urdf'))
+        self.declare_parameter('urdf_path', os.path.expanduser('~/progetto_12_ws/src/my_robot_description/urdf/tiago_robot.urdf'))
         # Se true, il nodo prova a eseguire automaticamente la motion "unfold_arm"
         # tramite play_motion2 prima di iniziare il pick & place.
         self.declare_parameter('run_unfold_arm', True)

@@ -21,11 +21,6 @@ Questo README descrive il nodo e il launch file di Task2, che estende Task1.
 
 ## Come usare
 1. Copiare il nodo `pick_and_place_task2.py` in un package ROS2 esistente, ad esempio `task2_pkg/task2_pkg/`.
-2. Aggiungere l'entry point in `setup.py`:
-
-```python
-'pick_and_place_task2 = task2_pkg.pick_and_place_task2:main',
-```
 
 3. Copiare il launch file in un package di launch valido, ad esempio `my_bringup/launch/launch_task2.py`.
 4. Compilare il workspace:

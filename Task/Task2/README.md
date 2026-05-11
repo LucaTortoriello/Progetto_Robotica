@@ -76,3 +76,27 @@ ros2 launch my_bringup launch_task2.py \
 - dopo ogni rilascio il robot torna alla configurazione comoda prima di passare all'oggetto successivo
 - se l'IK fallisce, il nodo entra nello stato `ERROR` e ferma il task
 
+## Errori da risolvere
+
+prima di mandare il goal, mel avviare il launch appare questo errore
+
+ubuntu@ubuntu12:~/progetto_12_ws$ ros2 launch my_bringup launch_task2.py
+[INFO] [launch]: All log files can be found below /home/ubuntu/.ros/log/2026-05-11-18-20-31-560619-ubuntu12-7124
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [det_task1-1]: process started with pid [7128]
+[INFO] [aruco_detector_all_markers-2]: process started with pid [7130]
+[INFO] [pick_and_place_task2-3]: process started with pid [7132]
+[det_task1-1] [INFO] [1778516432.611681962] [action_server_head_scan]: Action server custom pronto.
+[pick_and_place_task2-3] Traceback (most recent call last):
+[pick_and_place_task2-3]   File "/home/ubuntu/progetto_12_ws/install/task2_pkg/lib/task2_pkg/pick_and_place_task2", line 33, in <module>
+[pick_and_place_task2-3]     sys.exit(load_entry_point('task2-pkg', 'console_scripts', 'pick_and_place_task2')())
+[pick_and_place_task2-3]   File "/home/ubuntu/progetto_12_ws/build/task2_pkg/task2_pkg/pick_and_place_task2.py", line 541, in main
+[pick_and_place_task2-3]     node = TiagoPickAndPlaceTask2()
+[pick_and_place_task2-3]   File "/home/ubuntu/progetto_12_ws/build/task2_pkg/task2_pkg/pick_and_place_task2.py", line 152, in __init__
+[pick_and_place_task2-3]     self.robot = ERobot.URDF(urdf_loc)
+[pick_and_place_task2-3]   File "/home/ubuntu/.local/lib/python3.10/site-packages/roboticstoolbox/robot/Robot.py", line 306, in URDF
+[pick_and_place_task2-3]     links, name, urdf_string, urdf_filepath = Robot.URDF_read(file_path)
+[pick_and_place_task2-3]   File "/home/ubuntu/.local/lib/python3.10/site-packages/roboticstoolbox/robot/Robot.py", line 279, in URDF_read
+[pick_and_place_task2-3]     urdf_string = open(file_path).read()
+[pick_and_place_task2-3] FileNotFoundError: [Errno 2] No such file or directory: '/home/ubuntu/.local/lib/python3.10/site-packages/rtbdata/xacro/~/progetto_12_ws/src/my_robot_description/urdf/tiago_robot.urdf'
+[ERROR] [pick_and_place_task2-3]: process has died [pid 7132, exit code 1, cmd '/home/ubuntu/progetto_12_ws/install/task2_pkg/lib/task2_pkg/pick_and_place_task2 --ros-args -r __node:=tiago_pick_place_task2 --params-file /tmp/launch_params_0a8v77z3 --params-file /tmp/launch_params_1_sexxil --params-file /tmp/launch_params_zxf09pbg --params-file /tmp/launch_params_twuj0p0q --params-file /tmp/launch_params_5qgcb6s2 --params-file /tmp/launch_params_hfanfimj --params-file /tmp/launch_params_bfq24wna'].

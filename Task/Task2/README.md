@@ -100,3 +100,9 @@ ubuntu@ubuntu12:~/progetto_12_ws$ ros2 launch my_bringup launch_task2.py
 [pick_and_place_task2-3]     urdf_string = open(file_path).read()
 [pick_and_place_task2-3] FileNotFoundError: [Errno 2] No such file or directory: '/home/ubuntu/.local/lib/python3.10/site-packages/rtbdata/xacro/~/progetto_12_ws/src/my_robot_description/urdf/tiago_robot.urdf'
 [ERROR] [pick_and_place_task2-3]: process has died [pid 7132, exit code 1, cmd '/home/ubuntu/progetto_12_ws/install/task2_pkg/lib/task2_pkg/pick_and_place_task2 --ros-args -r __node:=tiago_pick_place_task2 --params-file /tmp/launch_params_0a8v77z3 --params-file /tmp/launch_params_1_sexxil --params-file /tmp/launch_params_zxf09pbg --params-file /tmp/launch_params_twuj0p0q --params-file /tmp/launch_params_5qgcb6s2 --params-file /tmp/launch_params_hfanfimj --params-file /tmp/launch_params_bfq24wna'].
+
+urdf_loc = '/home/rita/FdR_ISI2026/esercitazioni_2026/src/my_robot_description/urdf/tiago_robot.urdf'
+
+path nostro 
+
+/home/ubuntu/progetto_12_ws/src/my_robot_description/urdf/tiago_robot.urdf

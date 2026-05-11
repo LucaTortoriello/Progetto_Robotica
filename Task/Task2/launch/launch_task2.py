@@ -17,7 +17,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'urdf_path',
-            default_value='~/progetto_12_ws/src/my_robot_description/urdf/tiago_robot.urdf'
+            default_value='/home/ubuntu/progetto_12_ws/src/my_robot_description/urdf/tiago_robot.urdf'
         ),
         DeclareLaunchArgument(
             'run_unfold_arm',

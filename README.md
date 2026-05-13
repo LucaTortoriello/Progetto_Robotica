@@ -59,6 +59,7 @@ Progetto_Robotica/
 ├── ComandiUtili.txt         # Comandi ROS 2 organizzati per ambiente
 ├── ARUCO/                   # Package per rilevamento ArUco
 │   └── single_aruco_detection.py
+├── VideoUtili/              # Video dimostrativi
 ├── src/                     # Sorgenti dei package ROS 2
 │   ├── tiago_simulation/   # Task 1: Simulazione TIAGo
 │   └── tiago_manipulation/ # Task 2: Manipolazione
@@ -120,7 +121,7 @@ python3 single_aruco_detection.py
 
 ### Screencast
 
-Il video dimostrativo è disponibile nella cartella [video](video).
+Il video dimostrativo è disponibile nella cartella [VideoUtili](VideoUtili).
 
 ---
 

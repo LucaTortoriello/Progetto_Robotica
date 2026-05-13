@@ -50,6 +50,7 @@ env/
 # Ignora video e registrazioni
 video/
 *.mp4
+!VideoUtili/tiagoprimaprova.mp4
 *.mov
 *.avi
 *.mkv

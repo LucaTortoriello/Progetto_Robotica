@@ -127,6 +127,7 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
         self.ready_pose = None
         self.ready_pose_after_unfold = None
         self.q_sent = None
+        self.max_joint_jump = 0.45
 
         self.current_task_index = 0
         self.state = 'WAIT_SCAN_MARKERS'
@@ -247,7 +248,7 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
                 self.state = 'ERROR'
                 return
             self.state = 'LOWER_PICK'
-            self.wait_until = time.time() + 3
+            self.wait_until = time.time() + 4
             return
 
         if self.state == 'LOWER_PICK':
@@ -362,7 +363,7 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
 
     def plan_pick_approach(self):
         pick_pose, _ = self.get_current_task_poses()
-        pos_above = self._get_offset_position(pick_pose, dx=-0.0035, dy=-0.045, dz=-0.10)
+        pos_above = self._get_offset_position(pick_pose, dx=-0.0035, dy=-0.040, dz=-0.10)
         target = self._make_SE3(pick_pose, pos_above) * self.T_pick
         q_target = self.solve_ik(target)
         if q_target is not None:
@@ -373,11 +374,12 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
 
     def lower_to_pick(self):
         pick_pose, _ = self.get_current_task_poses()
-        pos_lower = self._get_offset_position(pick_pose, dx=-0.0035, dy=-0.045, dz=-0.14)
+        pos_lower = self._get_offset_position(pick_pose, dx=-0.0035, dy=-0.040, dz=-0.125)
         target = self._make_SE3(pick_pose, pos_lower) * self.T_pick
         q_target = self.solve_ik(target)
         if q_target is not None:
-            self.send_trajectory(q_target)
+            # Discesa più lenta per ridurre urti laterali sulla lattina.
+            self.send_trajectory(q_target, duration_sec=4.0)
             self.q_sent = q_target
             return True
         return False
@@ -405,22 +407,41 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
         return False
 
     def solve_ik(self, pose):
-        try:
-            q0 = self.q_sent if self.q_sent is not None else self.ready_pose
-            solution = self.robot.ik_NR(pose, q0=q0, pinv=True)
-            if solution is None or len(solution) == 0:
-                raise ValueError('IK fallita')
-            if hasattr(solution, 'success') and not solution.success:
-                raise ValueError(f'IK non convergente: {solution}')
-            if len(solution) > 1 and isinstance(solution[1], (bool, np.bool_)) and not solution[1]:
-                raise ValueError(f'IK non convergente: {solution}')
-            q = np.array(solution[0]).flatten()
-            if len(q) != len(self.joint_names):
-                raise ValueError(f'IK ha restituito {len(q)} giunti, attesi {len(self.joint_names)}')
-            return q
-        except Exception as ex:
-            self.get_logger().warn(f'IK fallita: {ex}')
+        q_seed = self.q_sent if self.q_sent is not None else self.ready_pose
+        if q_seed is None:
             return None
+
+        candidates = []
+        for _ in range(6):
+            try:
+                solution = self.robot.ik_NR(pose, q0=q_seed, pinv=True)
+                if solution is None or len(solution) == 0:
+                    raise ValueError('IK fallita')
+                q = np.array(solution[0]).flatten()
+                if len(q) != len(self.joint_names):
+                    raise ValueError(f'IK ha restituito {len(q)} giunti, attesi {len(self.joint_names)}')
+            except Exception:
+                q_seed = q_seed + np.random.normal(0.0, 0.03, size=len(q_seed))
+                continue
+
+            if self.q_sent is None:
+                return q
+
+            jump = float(np.max(np.abs(q - self.q_sent)))
+            candidates.append((jump, q.copy()))
+            if jump <= self.max_joint_jump:
+                return q
+
+            q_seed = q + np.random.normal(0.0, 0.02, size=len(q))
+
+        if candidates:
+            best_jump, best_q = min(candidates, key=lambda item: item[0])
+            if best_jump <= (self.max_joint_jump + 0.15):
+                self.get_logger().warn(f'IK con salto ridotto ma alto: {best_jump:.3f} rad')
+                return best_q
+
+        self.get_logger().warn('IK fallita: nessuna soluzione stabile trovata')
+        return None
 
     def _get_offset_position(self, pose, dx=0.0, dy=0.0, dz=0.0):
         return np.array([
@@ -439,7 +460,7 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
         R_mat = R.from_quat(quat).as_matrix()
         return SE3.Rt(R_mat, position)
 
-    def send_trajectory(self, q):
+    def send_trajectory(self, q, duration_sec=3.0):
         q = np.array(q).flatten()
         traj_arm = JointTrajectory()
         traj_torso = JointTrajectory()
@@ -449,8 +470,12 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
         point_torso = JointTrajectoryPoint()
         point_arm.positions = [float(x) for x in q[1:]]
         point_torso.positions = [float(q[0])]
-        point_arm.time_from_start.sec = 3
-        point_torso.time_from_start.sec = 3
+        sec = int(duration_sec)
+        nanosec = int((duration_sec - sec) * 1e9)
+        point_arm.time_from_start.sec = sec
+        point_arm.time_from_start.nanosec = nanosec
+        point_torso.time_from_start.sec = sec
+        point_torso.time_from_start.nanosec = nanosec
         traj_arm.points.append(point_arm)
         traj_torso.points.append(point_torso)
         self.arm_pub.publish(traj_arm)

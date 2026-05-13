@@ -1,0 +1,126 @@
+PAGE 1
+4: Pick&Place con TIAGo e RoboticsToolbox
+---
+CAMPUS BIO -MEDICO UNIVERSITY OF ROME
+Via Álvaro del Portillo, 21 - 00128 Rome - Italy
+www.unicampus.it
+Pick&Place con TIAGo e RoboticsToolbox
+Fondamenti di Robotica
+Docenti: Loredana Zollo
+ Clemente Lauretti
+Tutor: Rita Molle
+email: rita.molle@unicampus.it  
+===================
+PAGE 4
+5: Pick & place degli oggetti
+8: →Pick Coca Cola con gestione sequenza
+10: ❑Place Coca Cola
+11: ❑Pick Pringles
+12: ❑Place Pringles
+---
+CAMPUS BIO -MEDICO UNIVERSITY OF ROME
+www.unicampus.it
+CAMPUS BIO -MEDICO UNIVERSITY OF ROME
+www.unicampus.it
+Pick & place degli oggetti
+→publisher, subscriber , plugin Gazebo, service, action, rotazioni, RoboticsToolbox , 
+Rviz , Gazebo, tf
+→Pick Coca Cola con gestione sequenza
+•TO DO per il task 2:
+❑Place Coca Cola
+❑Pick Pringles
+❑Place Pringles
+❑Gestione sequenza 
+❑LaunchEsercitazione per task 2
+
+===================
+PAGE 5
+9: •Creare un nuovo package « pick_place » 
+10: •Nel pkg creato, creare un file pick_place_cocacola.py
+---
+CAMPUS BIO -MEDICO UNIVERSITY OF ROME
+www.unicampus.it
+CAMPUS BIO -MEDICO UNIVERSITY OF ROME
+www.unicampus.it
+Caricamento del modello
+•Scaricare il modello tiago_robot.urdf  da elearning  
+•Inserire il file appena scaricato in un pkg «my_robot_description \urdf » 
+all’interno del workspace del progetto
+•Creare un nuovo package « pick_place » 
+•Nel pkg creato, creare un file pick_place_cocacola.py
+•Caricare il modello urdf  nel codice.py
+from roboticstoolbox  import ERobot
+urdf_loc  = 
+'/home/ rita/FdR_ISI2026/esercitazioni_2026 /src/my_robot_description /urdf/tiago_robot.
+urdf'
+robot = ERobot.URDF (urdf_loc )Esercitazione per task 2
+===================
+PAGE 6
+5: Pick Coca ColaEsercitazione per task 2
+6: Aruco  pick
+21: T_pick  = SE3.Ry( np.pi /2)*SE3.Rz( -np.pi /2)
+---
+CAMPUS BIO -MEDICO UNIVERSITY OF ROME
+www.unicampus.it
+CAMPUS BIO -MEDICO UNIVERSITY OF ROME
+www.unicampus.it
+Pick Coca ColaEsercitazione per task 2
+Aruco  pick
+arm_tool_linkXARUCO PICK GRIPPER PICK
+X𝑥𝐺
+𝑦𝐺𝑧𝐺
+𝑦𝐴𝑥𝐴𝑧𝐴
+𝑥𝐺=−𝑦𝐴
+𝑦𝐺=−𝑧𝐴
+𝑧𝐺=𝑥𝐴𝑅𝐺𝐴=001
+−100
+0−10
+XX𝑥𝐺
+𝑦𝐺𝑧𝐺
+𝑦𝐴𝑥𝐴𝑧𝐴𝑅𝑦𝜋
+2𝑅𝑧−𝜋
+2X
+T_pick  = SE3.Ry( np.pi /2)*SE3.Rz( -np.pi /2)
+===================
+PAGE 7
+5: Place Coca ColaEsercitazione per task 2
+6: Aruco  placearm_tool_linkXARUCO PLACE GRIPPER PLACE
+18: T_place  = ?????
+---
+CAMPUS BIO -MEDICO UNIVERSITY OF ROME
+www.unicampus.it
+CAMPUS BIO -MEDICO UNIVERSITY OF ROME
+www.unicampus.it
+Place Coca ColaEsercitazione per task 2
+Aruco  placearm_tool_linkXARUCO PLACE GRIPPER PLACE
+𝑥𝐺
+𝑦𝐺𝑧𝐺
+𝑦𝐴𝑥𝐴𝑧𝐴
+𝑥𝐺=−𝑥𝐴
+𝑦𝐺=−𝑧𝐴
+𝑧𝐺=−𝑦𝐴𝑅𝐺𝐴=−100
+00−1
+0−10
+XX𝑥𝐺
+𝑦𝐺𝑧𝐺
+𝑦𝐴𝑥𝐴𝑧𝐴
+T_place  = ?????
+
+===================
+PAGE 8
+12: ros2 run pick_place_coca pick_place_cola
+---
+CAMPUS BIO -MEDICO UNIVERSITY OF ROME
+www.unicampus.it
+CAMPUS BIO -MEDICO UNIVERSITY OF ROME
+www.unicampus.it
+ 8Esercitazione per task 2
+Terminali : ros2 launch tiago_gazebo tiago_gazebo.launch.py 
+is_public_sim :=True 
+ros2 run aruco_pkg aruco_detection
+ros2 run aruco_pkg action_client
+ros2 run aruco_pkg action_server
+ros2 run play_motion2 run_motion unfold_arm
+ros2 run pick_place_coca pick_place_cola
+
+===================

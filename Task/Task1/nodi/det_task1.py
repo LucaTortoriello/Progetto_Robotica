@@ -32,10 +32,12 @@ class HeadActionServer(Node):
 
         self.joint_names = ['head_1_joint', 'head_2_joint']  # nome giunti
         self.head2_fixed = -0.57  # posizione fissa per il secondo giunto della testa
+        self.head1_home = 0.0  # configurazione di partenza per il primo giunto
+        self.head2_home = 0.0  # configurazione di partenza per il secondo giunto (testa rialzata)
         self.get_logger().info("Action server custom pronto.")
 
     # ------------------------------------------------------
-    def move_head(self, pos1):  # funzione per muovere la testa, pos1 è la posizione del primo giunto della testa
+    def move_head(self, pos1, pos2=None):  # funzione per muovere la testa, pos1 è la posizione del primo giunto della testa
         while not self.follow_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info("Attendo controller...")
 
@@ -44,7 +46,10 @@ class HeadActionServer(Node):
         traj.joint_names = self.joint_names
 
         point = JointTrajectoryPoint()
-        point.positions = [pos1, self.head2_fixed]
+        if pos2 is None:
+            pos2 = self.head2_fixed
+
+        point.positions = [pos1, pos2]
         point.time_from_start.sec = 1
 
         traj.points.append(point)
@@ -122,6 +127,21 @@ class HeadActionServer(Node):
             feedback.current_position = position
             feedback.moving = True
             goal_handle.publish_feedback(feedback)
+
+        # Torno alla configurazione di partenza.
+        if not self.move_head(self.head1_home, self.head2_home):
+            self.get_logger().warn("Ritorno alla configurazione di partenza fallito.")
+            feedback.current_position = self.head1_home
+            feedback.moving = False
+            goal_handle.publish_feedback(feedback)
+            goal_handle.abort()
+            result.success = False
+            result.message = "Ritorno alla configurazione di partenza fallito."
+            return result
+
+        feedback.current_position = self.head1_home
+        feedback.moving = True
+        goal_handle.publish_feedback(feedback)
 
         # A scansione terminata segnalo moving=False.
         feedback.moving = False

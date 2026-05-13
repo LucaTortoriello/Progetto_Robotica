@@ -75,7 +75,7 @@ def main(args=None):
     client = MoveHeadClient()
 
     # Invio goal: movimento oscillante da -0.217 a 0.217 con passo 0.05
-    client.send_goal(-0.217, 0.217, 0.05) #invio il goal dal main, in questo modo posso decidere i parametri del movimento direttamente da qui senza dover modificare il server
+    client.send_goal(-0.6, 0.6, 0.2) #invio il goal dal main, in questo modo posso decidere i parametri del movimento direttamente da qui senza dover modificare il server
 
     # Pulizia
     client.destroy_node()

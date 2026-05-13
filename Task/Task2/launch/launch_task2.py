@@ -36,20 +36,8 @@ def generate_launch_description():
             default_value='0.2'
         ),
         DeclareLaunchArgument(
-            'aruco_A',
-            default_value='26'
-        ),
-        DeclareLaunchArgument(
-            'aruco_B',
-            default_value='63'
-        ),
-        DeclareLaunchArgument(
-            'aruco_C',
-            default_value='4'
-        ),
-        DeclareLaunchArgument(
-            'aruco_D',
-            default_value='3'
+            'scan_wait_seconds',
+            default_value='15.0'
         ),
         Node(
             emulate_tty=True,
@@ -85,12 +73,9 @@ def generate_launch_description():
             output='screen',
             parameters=[
                 {'use_sim_time': True},
-                {'aruco_A': ParameterValue(LaunchConfiguration('aruco_A'), value_type=int)},
-                {'aruco_B': ParameterValue(LaunchConfiguration('aruco_B'), value_type=int)},
-                {'aruco_C': ParameterValue(LaunchConfiguration('aruco_C'), value_type=int)},
-                {'aruco_D': ParameterValue(LaunchConfiguration('aruco_D'), value_type=int)},
                 {'urdf_path': ParameterValue(LaunchConfiguration('urdf_path'), value_type=str)},
-                {'run_unfold_arm': ParameterValue(LaunchConfiguration('run_unfold_arm'), value_type=bool)}
+                {'run_unfold_arm': ParameterValue(LaunchConfiguration('run_unfold_arm'), value_type=bool)},
+                {'scan_wait_seconds': ParameterValue(LaunchConfiguration('scan_wait_seconds'), value_type=float)}
             ]
         )
     ])

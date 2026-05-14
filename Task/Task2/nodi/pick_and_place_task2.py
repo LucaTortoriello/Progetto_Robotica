@@ -66,13 +66,15 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
                 'name': 'cocacola',
                 'pick': 'A',
                 'place': 'C',
-                'model_name': 'cocacola'
+                'model_name': 'cocacola_with_aruco::cocacola',
+                'link_name': 'link'
             },
             {
                 'name': 'pringles',
                 'pick': 'B',
                 'place': 'D',
-                'model_name': 'pringles'
+                'model_name': 'pringles_with_aruco::pringles',
+                'link_name': 'link'
             }
         ]
 
@@ -127,7 +129,11 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
         self.ready_pose = None
         self.ready_pose_after_unfold = None
         self.q_sent = None
-        self.max_joint_jump = 0.45
+        self.max_joint_jump = 0.6
+        self.max_joint_jump_fallback = 1.2
+        self.lower_pick_duration = 7.0
+        self.close_delay_after_lower = 11.0
+        self.lift_after_pick_duration = 5.0
 
         self.current_task_index = 0
         self.state = 'WAIT_SCAN_MARKERS'
@@ -171,7 +177,7 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
         traj = JointTrajectory()
         traj.joint_names = ['gripper_left_finger_joint', 'gripper_right_finger_joint']
         point = JointTrajectoryPoint()
-        point.positions = [0.044, 0.044]
+        point.positions = [0.045, 0.045]
         point.time_from_start.sec = 2
         traj.points.append(point)
         self.gripper_pub.publish(traj)
@@ -181,7 +187,7 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
         traj = JointTrajectory()
         traj.joint_names = ['gripper_left_finger_joint', 'gripper_right_finger_joint']
         point = JointTrajectoryPoint()
-        point.positions = [0.041, 0.041]
+        point.positions = [0.0, 0.0]
         point.time_from_start.sec = 2
         traj.points.append(point)
         self.gripper_pub.publish(traj)
@@ -227,11 +233,14 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
             return
 
         if self.state == 'WAIT_MARKER':
+            if time.time() < self.wait_until:
+                return
             if not self.have_task_poses():
                 self.log_missing_task_poses()
                 return
             if not self.plan_pick_approach():
-                self.state = 'ERROR'
+                self.get_logger().warn('IK fallita per approach pick: ritento tra 2s')
+                self.wait_until = time.time() + 2.0
                 return
             self.state = 'MOVE_ABOVE_PICK'
             self.wait_until = time.time() + 4
@@ -248,7 +257,7 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
                 self.state = 'ERROR'
                 return
             self.state = 'LOWER_PICK'
-            self.wait_until = time.time() + 4
+            self.wait_until = time.time() + self.lower_pick_duration + self.close_delay_after_lower
             return
 
         if self.state == 'LOWER_PICK':
@@ -265,6 +274,16 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
                 return
             self.attach_object()
             self.get_logger().info('Oggetto attaccato al gripper')
+            if not self.lift_after_pick():
+                self.state = 'ERROR'
+                return
+            self.state = 'LIFT_AFTER_PICK'
+            self.wait_until = time.time() + self.lift_after_pick_duration + 0.5
+            return
+
+        if self.state == 'LIFT_AFTER_PICK':
+            if time.time() < self.wait_until:
+                return
             if not self.plan_place_approach():
                 self.state = 'ERROR'
                 return
@@ -363,23 +382,37 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
 
     def plan_pick_approach(self):
         pick_pose, _ = self.get_current_task_poses()
-        pos_above = self._get_offset_position(pick_pose, dx=-0.0035, dy=-0.040, dz=-0.10)
-        target = self._make_SE3(pick_pose, pos_above) * self.T_pick
-        q_target = self.solve_ik(target)
-        if q_target is not None:
-            self.send_trajectory(q_target)
-            self.q_sent = q_target
-            return True
+        for dy, dz in ((-0.045, -0.09), (-0.040, -0.09), (-0.050, -0.08)):
+            pos_above = self._get_offset_position(pick_pose, dx=-0.0035, dy=dy, dz=dz)
+            target = self._make_SE3(pick_pose, pos_above) * self.T_pick
+            q_target = self.solve_ik(target)
+            if q_target is not None:
+                self.send_trajectory(q_target)
+                self.q_sent = q_target
+                return True
         return False
 
     def lower_to_pick(self):
         pick_pose, _ = self.get_current_task_poses()
-        pos_lower = self._get_offset_position(pick_pose, dx=-0.0035, dy=-0.040, dz=-0.125)
-        target = self._make_SE3(pick_pose, pos_lower) * self.T_pick
+        for dz in (-0.10, -0.12, -0.14):
+            pos_lower = self._get_offset_position(pick_pose, dx=-0.0035, dy=-0.045, dz=dz)
+            target = self._make_SE3(pick_pose, pos_lower) * self.T_pick
+            q_target = self.solve_ik(target)
+            if q_target is not None:
+                # Discesa più lenta per ridurre urti laterali sulla lattina.
+                self.send_trajectory(q_target, duration_sec=self.lower_pick_duration)
+                self.q_sent = q_target
+                return True
+            self.get_logger().warn(f'IK fallita per lower_pick con dz={dz:.3f}')
+        return False
+
+    def lift_after_pick(self):
+        pick_pose, _ = self.get_current_task_poses()
+        pos_above = self._get_offset_position(pick_pose, dx=-0.0035, dy=-0.045, dz=-0.08)
+        target = self._make_SE3(pick_pose, pos_above) * self.T_pick
         q_target = self.solve_ik(target)
         if q_target is not None:
-            # Discesa più lenta per ridurre urti laterali sulla lattina.
-            self.send_trajectory(q_target, duration_sec=4.0)
+            self.send_trajectory(q_target, duration_sec=self.lift_after_pick_duration)
             self.q_sent = q_target
             return True
         return False
@@ -412,7 +445,7 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
             return None
 
         candidates = []
-        for _ in range(6):
+        for _ in range(8):
             try:
                 solution = self.robot.ik_NR(pose, q0=q_seed, pinv=True)
                 if solution is None or len(solution) == 0:
@@ -436,8 +469,11 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
 
         if candidates:
             best_jump, best_q = min(candidates, key=lambda item: item[0])
-            if best_jump <= (self.max_joint_jump + 0.15):
-                self.get_logger().warn(f'IK con salto ridotto ma alto: {best_jump:.3f} rad')
+            if best_jump <= self.max_joint_jump_fallback:
+                if best_jump > self.max_joint_jump:
+                    self.get_logger().warn(
+                        f'IK con salto alto: {best_jump:.3f} rad (fallback consentito)'
+                    )
                 return best_q
 
         self.get_logger().warn('IK fallita: nessuna soluzione stabile trovata')
@@ -515,21 +551,23 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
         return True
 
     def attach_object(self):
+        task = self.tasks[self.current_task_index]
         req = Attach.Request()
         req.model_name_1 = 'tiago'
         req.link_name_1 = 'gripper_left_finger_link'
-        req.model_name_2 = self.tasks[self.current_task_index]['model_name']
-        req.link_name_2 = 'link'
+        req.model_name_2 = task['model_name']
+        req.link_name_2 = task.get('link_name', 'link')
         future = self.attach_client.call_async(req)
         future.add_done_callback(functools.partial(self.attach_response_callback, 'attach'))
         self.get_logger().info('Richiesta attach inviata')
 
     def detach_object(self):
+        task = self.tasks[self.current_task_index]
         req = Attach.Request()
         req.model_name_1 = 'tiago'
         req.link_name_1 = 'gripper_left_finger_link'
-        req.model_name_2 = self.tasks[self.current_task_index]['model_name']
-        req.link_name_2 = 'link'
+        req.model_name_2 = task['model_name']
+        req.link_name_2 = task.get('link_name', 'link')
         future = self.detach_client.call_async(req)
         future.add_done_callback(functools.partial(self.attach_response_callback, 'detach'))
         self.get_logger().info('Richiesta detach inviata')

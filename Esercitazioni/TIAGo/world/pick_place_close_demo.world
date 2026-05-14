@@ -223,12 +223,12 @@
     <include>
       <uri>model://cocacola_with_aruco</uri>
       <pose>0.6 0.1 0.74 0 0 -3.14</pose>
-      <static>1</static>
+      <static>0</static>
     </include>
     <include>
       <uri>model://pringles_with_aruco</uri>
       <pose>0.6 0.25 0.74 0 0 -3.14</pose>
-      <static>1</static>
+      <static>0</static>
     </include>
     <include>
       <uri>model://aruco_marker_6cm_4</uri>

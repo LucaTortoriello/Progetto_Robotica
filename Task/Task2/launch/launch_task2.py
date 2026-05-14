@@ -21,7 +21,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'run_unfold_arm',
-            default_value='true'
+            default_value='false'
         ),
         DeclareLaunchArgument(
             'scan_min',

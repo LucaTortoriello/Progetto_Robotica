@@ -1,0 +1,27 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 50  # Hz
+    use_sim_time: true
+
+    # Publish all joint states
+    joint_state_controller:
+      type: joint_state_controller/JointStateController
+
+    arm_controller:
+      type: position_controllers/JointGroupPositionController
+      
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+      
+arm_controller:
+  ros__parameters:
+    joints:
+      - shoulder_pan_joint
+      - shoulder_pitch_joint
+      - elbow_roll_joint
+      - elbow_pitch_joint
+      - wrist_pitch_joint
+      - wrist_roll_joint
+      - gripper_roll_joint
+
+

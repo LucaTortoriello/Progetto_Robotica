@@ -1,0 +1,14 @@
+ros2 run robot_state_publisher robot_state_publisher --ros-args -p robot_description:="$(xacro /home/creolab/my_robot_control_ws/src/my_robot_description/urdf/my_manipulator.urdf.xacro)"
+
+ros2 launch gazebo_ros gazebo.launch.py
+
+ros2 run gazebo_ros spawn_entity.py -topic /robot_description -entity my_robot
+
+ros2 run gazebo_ros spawn_topic pub /arm_controller/commands std_msgity my_s/msg/Float64MultiArray "data: [0.0, 0.1, 0.0, 0.0, 2.0, 0.0, 0.0]"
+
+ros2 run controller_manager spawner "arm_controller"
+
+ros2 run controller_manager spawner "joint_state_broadcaster"
+
+
+

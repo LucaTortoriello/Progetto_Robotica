@@ -132,7 +132,7 @@ class TiagoPickAndPlaceTask2WithTPlace(Node):
         self.max_joint_jump = 0.6
         self.max_joint_jump_fallback = 1.2
         self.lower_pick_duration = 7.0
-        self.close_delay_after_lower = 11.0
+        self.close_delay_after_lower = 13.0
         self.lift_after_pick_duration = 5.0
 
         self.current_task_index = 0

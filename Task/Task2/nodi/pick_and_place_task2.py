@@ -360,7 +360,10 @@ class TiagoPickAndPlaceTask2(Node):
 
             place_pose = self.get_place_pose()
 
-            pos_above = self._get_offset_position(place_pose, dx=-0.0035, dy=-0.045, dz=-0.1)
+            # dx=0, dy=0: punta direttamente al marker di place.
+            # Con T_place diverso da T_pick, gli offset laterali del pick
+            # non hanno lo stesso senso fisico. Da calibrare in Gazebo se necessario.
+            pos_above = self._get_offset_position(place_pose, dx=0.0, dy=0.0, dz=-0.1)
             TF_above = self._make_SE3(place_pose, pos_above) * self.T_place
 
             q_target = self.robot.ik_NR(TF_above, q0=self.q_sent, pinv=True)[0]
@@ -387,8 +390,9 @@ class TiagoPickAndPlaceTask2(Node):
 
             place_pose = self.get_place_pose()
 
-            # dz piccolo: lattina quasi appoggiata, gripper non tocca il tavolo
-            pos_lower = self._get_offset_position(place_pose, dx=-0.0035, dy=-0.045, dz=-0.02)
+            # dx=0, dy=0: stessi offset dell'approach al place.
+            # dz=-0.02: quasi a toccare il piano, da calibrare in Gazebo.
+            pos_lower = self._get_offset_position(place_pose, dx=0.0, dy=0.0, dz=-0.02)
             TF_lower = self._make_SE3(place_pose, pos_lower) * self.T_place
 
             q_lower = self.robot.ik_NR(TF_lower, q0=self.q_sent, pinv=True)[0]

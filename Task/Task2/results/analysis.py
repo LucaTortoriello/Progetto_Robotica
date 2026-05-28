@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-"""
-Analysis Script per Task2 - Pick & Place
-Genera grafici e tabelle dai dati registrati
-"""
+# Analysis - Task2
+# Processa i dati e genera grafici
 
 import json
 import csv
@@ -30,24 +28,21 @@ class Task2Analysis:
         print(f"Durata simulazione: {self.data.get('duration_seconds', 0):.2f}s")
     
     def plot_joint_trajectories(self):
-        """Grafico delle traiettorie dei giunti nel tempo"""
+        # Grafico traiettorie giunti
         if not self.data['arm_trajectory']:
             print("Nessun dato arm_trajectory disponibile")
             return
         
         fig, axes = plt.subplots(4, 2, figsize=(15, 12))
-        fig.suptitle('Traiettorie dei Giunti - Task2 Pick & Place', fontsize=16, fontweight='bold')
+        fig.suptitle('Traiettorie Giunti', fontsize=14)
         
-        # Merge arm e torso
         arm_data = self.data['arm_trajectory']
         torso_data = self.data['torso_trajectory']
         
-        # Crea dizionari per accesso veloce
         arm_dict = {entry['timestamp']: entry for entry in arm_data}
         torso_dict = {entry['timestamp']: entry for entry in torso_data}
         all_times = sorted(set(arm_dict.keys()) | set(torso_dict.keys()))
         
-        # Dati combinati
         all_joints = []
         time_array = np.array(all_times) - self.start_time
         
@@ -76,7 +71,7 @@ class Task2Analysis:
         plt.close()
     
     def plot_marker_positions(self):
-        """Grafico delle posizioni dei marker ArUco nel tempo"""
+        # Grafico posizioni marker
         if not self.data['marker_poses']:
             print("Nessun dato marker disponibile")
             return
@@ -84,7 +79,7 @@ class Task2Analysis:
         fig = plt.figure(figsize=(15, 10))
         gs = gridspec.GridSpec(2, 2, figure=fig)
         
-        fig.suptitle('Posizioni Marker ArUco - Task2 Pick & Place', fontsize=16, fontweight='bold')
+        fig.suptitle('Posizioni Marker', fontsize=14)
         
         markers_info = {
             'marker_1': ('B - Pringles Pick', 'red'),
@@ -123,7 +118,7 @@ class Task2Analysis:
         plt.close()
     
     def plot_joint_velocities(self):
-        """Grafico delle velocità dei giunti"""
+        # Grafico velocità giunti
         if not self.data['arm_trajectory']:
             return
         
@@ -147,7 +142,7 @@ class Task2Analysis:
         all_velocities = np.array(all_velocities)
         
         fig, axes = plt.subplots(4, 2, figsize=(15, 12))
-        fig.suptitle('Velocità dei Giunti - Task2 Pick & Place', fontsize=16, fontweight='bold')
+        fig.suptitle('Velocità Giunti', fontsize=14)
         
         for i in range(8):
             ax = axes[i // 2, i % 2]
@@ -163,7 +158,7 @@ class Task2Analysis:
         plt.close()
     
     def generate_statistics_table(self):
-        """Genera tabella con statistiche dei giunti"""
+        # Tabella statistiche giunti
         if not self.data['arm_trajectory']:
             return
         
@@ -183,8 +178,6 @@ class Task2Analysis:
                 all_joints.append(joint_config)
         
         all_joints = np.array(all_joints)
-        
-        # Calcola statistiche
         stats = []
         for i in range(8):
             joint_traj = all_joints[:, i]

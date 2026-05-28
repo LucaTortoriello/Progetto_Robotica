@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-"""
-Data Logger per Task2 - Pick & Place
-Registra i dati della simulazione per analisi posteriore
-"""
+# Data Logger - Task2
+# Raccoglie dati dei giunti e marker durante la simulazione
 
 import json
 import time
@@ -73,7 +71,7 @@ class DataLogger(Node):
         self.log_event('DATA_LOGGER_START', 'Logger avviato')
     
     def arm_callback(self, msg):
-        """Registra lo stato del braccio"""
+        # Salva posizione, velocità e sforzo del braccio
         entry = {
             'timestamp': time.time(),
             'positions': list(msg.actual.positions),
@@ -84,7 +82,7 @@ class DataLogger(Node):
         self.data['arm_trajectory'].append(entry)
     
     def torso_callback(self, msg):
-        """Registra lo stato del torso"""
+        # Salva lo stato del torso
         entry = {
             'timestamp': time.time(),
             'positions': list(msg.actual.positions),
@@ -94,7 +92,7 @@ class DataLogger(Node):
         self.data['torso_trajectory'].append(entry)
     
     def marker_callback(self, msg, marker_id):
-        """Registra pose dei marker ArUco"""
+        # Raccoglie pose dei marker ArUco
         if f'marker_{marker_id}' not in self.data['marker_poses']:
             self.data['marker_poses'][f'marker_{marker_id}'] = []
         
@@ -115,7 +113,7 @@ class DataLogger(Node):
         self.data['marker_poses'][f'marker_{marker_id}'].append(entry)
     
     def log_event(self, event_type, description):
-        """Registra un evento importante"""
+        # Registra evento con timestamp
         entry = {
             'timestamp': time.time(),
             'type': event_type,
@@ -125,7 +123,7 @@ class DataLogger(Node):
         self.get_logger().info(f'[{event_type}] {description}')
     
     def save_data(self):
-        """Salva i dati in JSON e CSV"""
+        # Salva dati in JSON e CSV
         try:
             # Salva JSON
             data_copy = self.data.copy()
@@ -146,22 +144,18 @@ class DataLogger(Node):
             self.get_logger().error(f'Errore nel salvataggio: {e}')
     
     def _save_joints_csv(self):
-        """Salva la traiettoria dei giunti in CSV"""
+        # Esporta dati in CSV
         try:
             with open(self.csv_file, 'w') as f:
-                # Header
                 f.write('timestamp,torso_lift,arm_1,arm_2,arm_3,arm_4,arm_5,arm_6,arm_7\n')
                 
-                # Merge arm e torso data per timestamp
                 arm_dict = {entry['timestamp']: entry for entry in self.data['arm_trajectory']}
                 torso_dict = {entry['timestamp']: entry for entry in self.data['torso_trajectory']}
-                
                 all_times = sorted(set(arm_dict.keys()) | set(torso_dict.keys()))
                 
                 for ts in all_times:
                     arm_entry = arm_dict.get(ts)
                     torso_entry = torso_dict.get(ts)
-                    
                     if arm_entry and torso_entry:
                         positions = [torso_entry['positions'][0]] + arm_entry['positions']
                         f.write(f"{ts}," + ",".join(map(str, positions)) + "\n")

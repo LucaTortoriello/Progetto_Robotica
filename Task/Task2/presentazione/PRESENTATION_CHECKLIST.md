@@ -1,6 +1,23 @@
 # Checklist Presentazione - Task2 Pick & Place
 
-Questo documento aiuta a preparare la presentazione seguendo i suggerimenti forniti.
+Questo documento aiuta a preparare la presentazione **usando SOLO ciò che è stato spiegato a lezione**.
+
+## ⭐ Linee guida: Rimani semplice
+
+### ✅ INCLUDI (roba insegnata a lezione):
+- FK/IK con Robotics Toolbox (Esercitazione5)
+- Marker ArUco (Esercitazione1)
+- Topic ROS2 (Esercitazione2)
+- Machine a stati semplice
+- Grafici 2D (come in Esercitazione5)
+- Tabelle numeriche
+
+### ❌ NON INCLUDERE (troppo complicato):
+- Visualizzazione 3D del robot
+- Animazioni
+- Jacobiane dettagliate
+- Cose non insegnate
+- Formule matematiche complicate
 
 ## ☐ 1. Schema/Diagramma di funzionamento
 
@@ -31,41 +48,46 @@ Cosa includere:
 
 ## ☐ 2. Descrizione metodi e tool ROS2
 
-**Nota**: Spiega sia l'architettura complessiva (Task1 + Task2) che i dettagli di implementazione.
+**Nota**: Basato su ciò che è stato insegnato a lezione. Niente cose complicate, solo quello che hai imparato.
 
-**Task1 (ArUco Detection):**
-- [ ] Come i marker ArUco vengono rilevati in Gazebo
-- [ ] Topic `/aruco_base_*` che fornisce pose nel frame base robot
-- [ ] Come Task2 utilizza questi dati
+### Task1 (da Esercitazione2-Topic e Esercitazione1):
+- [ ] **ArUco Detection**:
+  - Come i marker ArUco vengono rilevati in Gazebo
+  - Topic `/aruco_base_*` fornisce pose (x, y, z) e orientamento quaternione
+  - 4 marker per il task: A (pick coca), B (pick pringles), C (place coca), D (place pringles)
 
-**Task2 (Pick & Place Orchestration):**
-- [ ] **Inverse Kinematics (IK)**: usato `ERobot.ik_NR()` da Robotics Toolbox
-  - Come viene calcolata la configurazione da una pose desiderata
-  - Seed iniziale usato per accelerare convergenza
-  - Pinv e NR (Newton-Raphson) per solving
+### Task2 (da Esercitazione5-RoboticsToolbox e PickPlace):
+- [ ] **Forward Kinematics (FK)**: `robot.fkine(q)`
+  - Calcola la pose dell'end-effector data una configurazione dei giunti
+  - Usato per verificare dove il robot arriva
   
-- [ ] **Marker-based Positioning**: 
-  - I dati dai marker di Task1 vengono usati come target
-  - Offsets (dx, dy, dz) applicati per approach vs lowering
-  - Trasformazioni SE3 (Ry, Rz) per orientamento end-effector
+- [ ] **Inverse Kinematics (IK)**: `robot.ik_NR()` (Newton-Raphson)
+  - Calcola la configurazione dei giunti da una pose desiderata
+  - Seed iniziale (`q0`) per aiutare la convergenza
+  - `pinv=True` usa pseudo-inversa jacobiana
+  - Usato per ogni target (approach pick, lower, move, approach place)
   
-- [ ] **Attach/Detach**: simulazione del grip in Gazebo
-  - Service `/attach` e `/detach` usati con physics
-  - Link name e model name specifici per ogni oggetto
+- [ ] **Traslazioni SE3**: `SE3.Ry()`, `SE3.Rz()` per le rotazioni
+  - Orienta l'end-effector correttamente (90° per pick, 180° per place)
+  - Combinate con marker pose per generare target trajectories
   
-- [ ] **Joint Trajectory Controller**: esecuzione dei movimenti
-  - Pubblicazione su `/arm_controller/joint_trajectory`
-  - `/torso_controller/joint_trajectory` per il torso
-  - `/gripper_controller/joint_trajectory` per le dita
+- [ ] **Offsets spaziali**:
+  - Approach sopra marker: `dz = -0.1 m` (10 cm sopra)
+  - Lower per pick: `dz = -0.2 m` (sotto l'oggetto)
+  - `dx`, `dy` per allineamento fine
   
-- [ ] **Macchina a Stati**: orchestrazione della sequenza
-  - 8 stati per oggetto (WAIT_PICK, LOWER_PICK, ATTACH, LIFT_AFTER_PICK, MOVE_TO_PLACE, LOWER_PLACE, DETACH, RETURN_SAFE)
-  - Ripetuto 2 volte (una per ogni oggetto)
-  - Timer 0.5s che esegue il loop principale
+- [ ] **Joint Trajectory Controller**: 
+  - Pubblica su `/arm_controller/joint_trajectory`
+  - Controller ROS2 esegue il movimento interpolando la configurazione
+  - Tempo di movimento: `duration_sec` (es. 3 secondi per abbassare)
+  
+- [ ] **Macchina a Stati**: 8 stati ripetuti per 2 oggetti
+  - WAIT_PICK → LOWER_PICK → ATTACH → LIFT_AFTER_PICK → MOVE_TO_PLACE → LOWER_PLACE → DETACH → RETURN_SAFE
 
 **Output:**
-- [ ] Sezione nel README.md principale o file separato: `METODOLOGIA.md`
-- [ ] Include architettura complessiva (vedi [ARCHITETTURA.md](ARCHITETTURA.md))
+- [ ] Spiega i concetti di FK/IK (come nella lezione Esercitazione5)
+- [ ] Diagramma dei marker (A, B, C, D)
+- [ ] Timeline degli 8 stati
 
 ---
 
@@ -99,31 +121,31 @@ Cosa registrare:
 
 ## ☐ 4. Risultati della simulazione (GRAFICI E TABELLE)
 
-✓ **Questo è quello che abbiamo appena preparato!**
+✓ **Questo è quello che abbiamo preparato - SEMPLICE e BASATO SU CLASSE**
 
 Cosa generare e includere:
-- [ ] Esegui il data_logger durante una simulazione completa
+- [ ] Esegui il data_logger durante una simulazione completa di Task2
 - [ ] Genera l'analisi con `analysis.py`
-- [ ] Includi nella presentazione:
+- [ ] **NON serve visualizzazione 3D** - basta i grafici 2D
 
-### Grafici (come immagini PNG):
-- [ ] **joint_trajectories.png** - Mostra come si muovono i giunti nel tempo
-- [ ] **joint_velocities.png** - Mostra le velocità durante il movimento
-- [ ] **marker_positions.png** - Mostra il tracking dei marker ArUco
+### Grafici (immagini PNG - come Esercitazione5):
+- [ ] **joint_trajectories.png** - Posizioni degli 8 giunti nel tempo (come il grafico di Esercitazione5)
+- [ ] **joint_velocities.png** - Velocità di ciascun giunto (mostra il controllo del movimento)
+- [ ] **marker_positions.png** - Posizioni X,Y,Z dei 4 marker ArUco (stazionarie se tracking corretto)
 
-### Tabelle (esporta da CSV):
+### Tabelle (semplici statistiche):
 - [ ] **Statistiche giunti** (Min, Max, Media, Std Dev)
-  - Copia i dati da `statistics_joints.csv` in una slide
-  - Formatta con tabella professionale
+  - Mostra il range di movimento di ogni giunto
+  - Verifica se i limiti sono rispettati
 
-- [ ] **Timeline eventi** (quando avviene ogni evento)
-  - Copia da `task_events.csv`
-  - Mostra i tempi di ogni fase (pick, place, attach, detach)
+- [ ] **Timeline eventi** (tempo di cada fase)
+  - Quando avviene ogni stato della macchina a stati
+  - Tempo totale di pick & place
 
 **Output:**
-- [ ] Cartella `Task/Task2/presentazione/analysis_output/` con tutti i file
-- [ ] Esporta i grafici come PNG ad alta risoluzione
-- [ ] Converti le tabelle CSV → PowerPoint/Impress
+- [ ] PNG ad alta risoluzione (150 DPI)
+- [ ] CSV leggibili e importabili in Excel/Calc
+- [ ] Niente 3D animation o cose complicate
 
 ---
 

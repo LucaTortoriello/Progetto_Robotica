@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Utility Script - Automatizza la raccolta e analisi dati
-"""
+# Utility - Avvia logger e analisi
 
 import subprocess
 import sys
@@ -10,7 +8,7 @@ from pathlib import Path
 
 
 def find_latest_log():
-    """Trova il file JSON più recente"""
+    # Trova il file più recente
     log_dir = Path('/tmp/task2_logs')
     if not log_dir.exists():
         return None
@@ -20,14 +18,14 @@ def find_latest_log():
 
 
 def start_logger():
-    """Avvia il data logger in background"""
+    # Avvia data logger
     script = Path(__file__).parent / 'data_logger.py'
     print(f"✓ Avvio logger: {script}")
     subprocess.Popen(['python3', str(script)])
 
 
 def analyze_latest():
-    """Analizza il file più recente"""
+    # Analizza il file più recente
     json_file = find_latest_log()
     
     if not json_file:

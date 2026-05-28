@@ -138,7 +138,6 @@ class TiagoPickAndPlaceTask2(Node):
         self.robot = ERobot.URDF(urdf_loc)
 
         # Rotazione end-effector per la fase di PICK
-        # (identica al riferimento pick_coca_cola.py)
         self.T_pick = SE3.Ry(np.pi / 2) * SE3.Rz(-np.pi / 2)
 
         # Rotazione end-effector per la fase di PLACE:
@@ -275,7 +274,7 @@ class TiagoPickAndPlaceTask2(Node):
             self.send_trajectory(q_target)
             self.q_sent = q_target
 
-            self.wait_until = time.time() + 4
+            self.wait_until = time.time() + 15
             self.state = 'LOWER_PICK'
             return
 
@@ -299,7 +298,7 @@ class TiagoPickAndPlaceTask2(Node):
             self.send_trajectory(q_lower, duration_sec=3.0)
             self.q_sent = q_lower
 
-            self.wait_until = time.time() + 3
+            self.wait_until = time.time() + 5
             self.state = 'ATTACH'
             return
 
@@ -320,7 +319,7 @@ class TiagoPickAndPlaceTask2(Node):
             self.attach_object()
             self.get_logger().info('Oggetto preso!')
 
-            self.wait_until = time.time() + 1.0
+            self.wait_until = time.time() + 8
             self.state = 'LIFT_AFTER_PICK'
             return
 
@@ -343,7 +342,7 @@ class TiagoPickAndPlaceTask2(Node):
             self.send_trajectory(q_target, duration_sec=3.0)
             self.q_sent = q_target
 
-            self.wait_until = time.time() + 4
+            self.wait_until = time.time() + 15
             self.state = 'MOVE_TO_PLACE'
             return
 
@@ -370,7 +369,7 @@ class TiagoPickAndPlaceTask2(Node):
             self.send_trajectory(q_target)
             self.q_sent = q_target
 
-            self.wait_until = time.time() + 4
+            self.wait_until = time.time() + 15
             self.state = 'LOWER_PLACE'
             return
 
@@ -399,7 +398,7 @@ class TiagoPickAndPlaceTask2(Node):
             self.send_trajectory(q_lower, duration_sec=3.0)
             self.q_sent = q_lower
 
-            self.wait_until = time.time() + 3
+            self.wait_until = time.time() + 8
             self.state = 'DETACH'
             return
 
@@ -418,7 +417,7 @@ class TiagoPickAndPlaceTask2(Node):
             self.open_gripper()     # poi apre il gripper
             self.get_logger().info('Oggetto rilasciato!')
 
-            self.wait_until = time.time() + 2.5
+            self.wait_until = time.time() + 5
             self.state = 'RETURN_SAFE'
             return
 

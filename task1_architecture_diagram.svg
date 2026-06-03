@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <defs>
+    <marker id="arrowAction" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f77b4"/>
+    </marker>
+    <marker id="arrowFeedback" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2ca02c"/>
+    </marker>
+    <marker id="arrowResult" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#d62728"/>
+    </marker>
+    <marker id="arrowTopic" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#9467bd"/>
+    </marker>
+    <marker id="arrowSystem" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff7f0e"/>
+    </marker>
+    <style>
+      .title { font: 700 32px 'Segoe UI', Arial, sans-serif; fill: #222; }
+      .subtitle { font: 600 18px 'Segoe UI', Arial, sans-serif; fill: #333; }
+      .boxTitle { font: 700 18px 'Segoe UI', Arial, sans-serif; fill: #111; }
+      .boxText { font: 500 14px 'Segoe UI', Arial, sans-serif; fill: #222; }
+      .small { font: 500 13px 'Segoe UI', Arial, sans-serif; fill: #222; }
+      .legend { font: 600 13px 'Segoe UI', Arial, sans-serif; fill: #222; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="800" fill="#f8fafc"/>
+  <text x="600" y="52" text-anchor="middle" class="title">Task 1 - Architettura a Blocchi ROS 2</text>
+  <text x="600" y="82" text-anchor="middle" class="subtitle">Nodi, comunicazioni Action, topic ArUco, Gazebo/TIAGo e frame di riferimento</text>
+
+  <!-- System layer -->
+  <rect x="40" y="120" width="1120" height="210" rx="18" fill="#fff7ed" stroke="#fb923c" stroke-width="2.5"/>
+  <text x="70" y="152" class="boxTitle">Simulazione e Robot</text>
+
+  <rect x="90" y="175" width="360" height="120" rx="14" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+  <text x="270" y="205" text-anchor="middle" class="boxTitle">Gazebo Simulator</text>
+  <text x="270" y="230" text-anchor="middle" class="boxText">TIAGo + ambiente</text>
+  <text x="270" y="252" text-anchor="middle" class="boxText">Camera RGB:</text>
+  <text x="270" y="272" text-anchor="middle" class="small">/head_front_camera/rgb/image_raw</text>
+
+  <rect x="510" y="175" width="600" height="120" rx="14" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+  <text x="810" y="205" text-anchor="middle" class="boxTitle">TIAGo + TF tree</text>
+  <text x="810" y="230" text-anchor="middle" class="boxText">Frame camera: head_front_camera_color_optical_frame</text>
+  <text x="810" y="252" text-anchor="middle" class="boxText">Frame base: base_footprint</text>
+  <text x="810" y="274" text-anchor="middle" class="small">Trasformazione camera → base usata da aruco_detector_all_markers</text>
+
+  <!-- ROS Nodes layer -->
+  <rect x="40" y="360" width="1120" height="305" rx="18" fill="#eff6ff" stroke="#60a5fa" stroke-width="2.5"/>
+  <text x="70" y="392" class="boxTitle">Nodi Task 1</text>
+
+  <rect x="90" y="435" width="310" height="170" rx="14" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="245" y="468" text-anchor="middle" class="boxTitle">move_head_client_task1</text>
+  <text x="245" y="495" text-anchor="middle" class="boxText">Action Client</text>
+  <text x="245" y="518" text-anchor="middle" class="small">Invia Goal scan testa</text>
+  <text x="245" y="540" text-anchor="middle" class="small">Riceve Feedback e Result</text>
+
+  <rect x="445" y="435" width="310" height="170" rx="14" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="600" y="468" text-anchor="middle" class="boxTitle">det_task1</text>
+  <text x="600" y="495" text-anchor="middle" class="boxText">Action Server /move_head</text>
+  <text x="600" y="518" text-anchor="middle" class="small">Controlla /head_controller/</text>
+  <text x="600" y="538" text-anchor="middle" class="small">follow_joint_trajectory</text>
+
+  <rect x="800" y="435" width="310" height="170" rx="14" fill="#ffffff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="955" y="468" text-anchor="middle" class="boxTitle">aruco_detector_all_markers</text>
+  <text x="955" y="495" text-anchor="middle" class="boxText">Detector + TF2 transform</text>
+  <text x="955" y="518" text-anchor="middle" class="small">Pubblica /aruco_camera_ID</text>
+  <text x="955" y="540" text-anchor="middle" class="small">Pubblica /aruco_base_ID</text>
+
+  <!-- Action communication -->
+  <line x1="400" y1="485" x2="445" y2="485" stroke="#1f77b4" stroke-width="4" marker-end="url(#arrowAction)"/>
+  <text x="422" y="472" text-anchor="middle" class="legend" fill="#1f77b4">Action Goal</text>
+
+  <line x1="445" y1="530" x2="400" y2="530" stroke="#2ca02c" stroke-width="4" marker-end="url(#arrowFeedback)"/>
+  <text x="423" y="547" text-anchor="middle" class="legend" fill="#2ca02c">Feedback</text>
+
+  <line x1="445" y1="575" x2="400" y2="575" stroke="#d62728" stroke-width="4" marker-end="url(#arrowResult)"/>
+  <text x="422" y="592" text-anchor="middle" class="legend" fill="#d62728">Result</text>
+
+  <!-- System connections -->
+  <line x1="450" y1="235" x2="800" y2="485" stroke="#ff7f0e" stroke-width="3.5" marker-end="url(#arrowSystem)"/>
+  <text x="625" y="350" text-anchor="middle" class="legend" fill="#ff7f0e">Image + CameraInfo</text>
+
+  <line x1="600" y1="435" x2="600" y2="295" stroke="#ff7f0e" stroke-width="3.5" marker-end="url(#arrowSystem)"/>
+  <text x="620" y="360" class="legend" fill="#ff7f0e">Comando testa TIAGo</text>
+
+  <line x1="955" y1="435" x2="900" y2="295" stroke="#ff7f0e" stroke-width="3.5" marker-end="url(#arrowSystem)"/>
+  <text x="980" y="355" class="legend" fill="#ff7f0e">TF camera → base</text>
+
+  <!-- Topic outputs -->
+  <line x1="1110" y1="505" x2="1150" y2="505" stroke="#9467bd" stroke-width="4" marker-end="url(#arrowTopic)"/>
+  <text x="1110" y="492" class="legend" fill="#9467bd">/aruco_camera_ID</text>
+
+  <line x1="1110" y1="555" x2="1150" y2="555" stroke="#9467bd" stroke-width="4" marker-end="url(#arrowTopic)"/>
+  <text x="1115" y="573" class="legend" fill="#9467bd">/aruco_base_ID</text>
+
+  <!-- Legend -->
+  <rect x="40" y="690" width="1120" height="90" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.8"/>
+  <text x="70" y="718" class="boxTitle">Legenda comunicazioni</text>
+
+  <line x1="235" y1="713" x2="285" y2="713" stroke="#1f77b4" stroke-width="4" marker-end="url(#arrowAction)"/>
+  <text x="295" y="718" class="legend" fill="#1f77b4">Action Goal</text>
+
+  <line x1="430" y1="713" x2="480" y2="713" stroke="#2ca02c" stroke-width="4" marker-end="url(#arrowFeedback)"/>
+  <text x="490" y="718" class="legend" fill="#2ca02c">Feedback</text>
+
+  <line x1="605" y1="713" x2="655" y2="713" stroke="#d62728" stroke-width="4" marker-end="url(#arrowResult)"/>
+  <text x="665" y="718" class="legend" fill="#d62728">Result</text>
+
+  <line x1="760" y1="713" x2="810" y2="713" stroke="#9467bd" stroke-width="4" marker-end="url(#arrowTopic)"/>
+  <text x="820" y="718" class="legend" fill="#9467bd">Topic ArUco</text>
+
+  <line x1="950" y1="713" x2="1000" y2="713" stroke="#ff7f0e" stroke-width="4" marker-end="url(#arrowSystem)"/>
+  <text x="1010" y="718" class="legend" fill="#ff7f0e">Connessioni sistema</text>
+
+  <text x="70" y="748" class="small">Formato: SVG 1200x800 px - pronto per inserimento in PowerPoint/documento.</text>
+</svg>
